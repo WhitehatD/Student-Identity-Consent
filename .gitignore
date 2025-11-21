@@ -1,0 +1,27 @@
+node_modules/
+.env
+coverage/
+coverage.json
+typechain/
+typechain-types/
+
+# Hardhat files
+cache/
+artifacts/
+ignition/deployments/
+
+# TypeScript
+*.tsbuildinfo
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Misc
+.DS_Store
+
+docs/
