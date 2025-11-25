@@ -8,10 +8,12 @@
   },
   "scripts": {
     "test": "hardhat test",
+    "node": "hardhat node",
     "test:unit": "hardhat test",
     "compile": "hardhat compile",
     "deploy": "hardhat ignition deploy ./ignition/modules/EduSystem.ts",
-    "demo": "hardhat run scripts/demo.ts"
+    "demo": "hardhat run scripts/demo.ts",
+    "deploy:local": "npx hardhat ignition deploy ./ignition/modules/EduSystem.ts --network"
   },
   "keywords": [],
   "author": "",
