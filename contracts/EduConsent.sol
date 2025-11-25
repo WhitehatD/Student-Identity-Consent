@@ -23,8 +23,7 @@ contract EduConsent {
 
     enum DataType {
         BasicProfile,      // handle, displayName, profileCid
-        AcademicRecord,    // off-chain pointer to academic transcript
-        SocialProfile      // friends, posts, etc.
+        OffchainData,     // e.g. transcripts, certificates (off-chain reference)
     }
 
     // Optimized struct packing: reduced from 6 slots to 2 slots
