@@ -1,4 +1,3 @@
-// src/pages/Home.tsx
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -7,7 +6,6 @@ export default function Home() {
     return (
         <main className="min-h-[calc(100vh-56px)] bg-slate-950 text-slate-50">
             <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 md:py-16">
-                {/* Hero */}
                 <section className="space-y-4">
                     <p className="text-sm uppercase tracking-[0.2em] text-emerald-400">
                         weeee
@@ -43,7 +41,6 @@ export default function Home() {
                     </div>
                 </section>
 
-                {/* Two cards */}
                 <section className="grid gap-6 md:grid-cols-2">
                     <Card className="bg-slate-900/60 border-slate-800">
                         <CardHeader>

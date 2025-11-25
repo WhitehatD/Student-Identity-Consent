@@ -1,9 +1,8 @@
-// src/lib/auth.tsx
 import { createContext, useContext, useState, ReactNode } from "react";
 
 type User = {
-    id: string;      // later: your chain account ID
-    handle: string;  // e.g. @kirsten
+    id: string;
+    handle: string;
 };
 
 type AuthContextValue = {
@@ -17,7 +16,6 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
 
-    // TEMP: fake login. Later you plug in your own blockchain login here.
     const loginDemo = () =>
         setUser({
             id: "demo-account-1",

@@ -1,4 +1,3 @@
-// src/pages/RegisterPage.tsx
 import { useState } from "react";
 import StudentRegisterForm from "@/components/StudentRegisterForm";
 import RequesterRegisterForm from "@/components/RequesterRegisterForm";

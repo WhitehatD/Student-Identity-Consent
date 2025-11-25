@@ -1,4 +1,3 @@
-// src/pages/ProfilePage.tsx
 import { useParams } from "react-router-dom";
 import { useReadContract } from "wagmi";
 import { addresses } from "@/contracts/addresses";
@@ -10,7 +9,6 @@ import { Label } from "@/components/ui/label";
 export default function ProfilePage() {
     const { address } = useParams<{ address: `0x${string}` }>();
 
-    // 1. Determine the user's role
     const { data: role, isLoading: isLoadingRole } = useReadContract({
         address: addresses.eduIdentity,
         abi: eduIdentityAbi,
@@ -19,7 +17,6 @@ export default function ProfilePage() {
         query: { enabled: !!address },
     });
 
-    // 2. Fetch student profile if role is Student (1)
     const { data: studentProfile, isLoading: isLoadingStudent } = useReadContract({
         address: addresses.eduIdentity,
         abi: eduIdentityAbi,
@@ -28,7 +25,6 @@ export default function ProfilePage() {
         query: { enabled: !!address && role === 1 },
     });
 
-    // 3. Fetch requester profile if role is Requester (2)
     const { data: requesterProfile, isLoading: isLoadingRequester } = useReadContract({
         address: addresses.eduIdentity,
         abi: eduIdentityAbi,

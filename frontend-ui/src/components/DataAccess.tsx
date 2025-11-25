@@ -1,4 +1,3 @@
-// src/components/DataAccess.tsx
 import { useState, FormEvent } from "react";
 import { useAccount, useReadContract } from "wagmi";
 import {
@@ -34,7 +33,7 @@ export default function DataAccess() {
         functionName: "hasValidConsent",
         args: [studentAddress as `0x${string}`, requesterAddress!, dataType],
         query: {
-            enabled: false, // Only run when form is submitted
+            enabled: false,
         },
     });
 

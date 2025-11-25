@@ -1,4 +1,3 @@
-// src/components/AuditLog.tsx
 import { useState, useEffect } from "react";
 import { useAccount, usePublicClient } from "wagmi";
 import {
@@ -19,19 +18,15 @@ import {
 import { addresses } from "@/contracts/addresses";
 import { parseAbiItem } from "viem";
 
-// --- Types and Constants ---
-
 const DATA_OPTIONS_REVERSE = ["Basic Profile", "Academic Record", "Social Profile"];
 
 type LogRow = {
-    id: string; // tx hash + log index
+    id: string;
     requester: `0x${string}`;
     dataType: number;
     timestamp: bigint;
     granted: boolean;
 };
-
-// --- Component ---
 
 export default function AuditLog() {
     const { address } = useAccount();
@@ -65,7 +60,6 @@ export default function AuditLog() {
                 });
             }
 
-            // Sort logs by most recent first
             accessLogs.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
 
             setLogs(accessLogs);

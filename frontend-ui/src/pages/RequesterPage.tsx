@@ -1,4 +1,3 @@
-// src/pages/RequesterPage.tsx
 import { useAccount, useReadContract } from "wagmi";
 import { Link } from "react-router-dom";
 import { addresses } from "../contracts/addresses";

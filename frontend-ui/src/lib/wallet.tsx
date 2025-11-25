@@ -6,13 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 
-// NOTE: The `account` property is available on the `injected` connector
-// and can be used to create a burner wallet.
 export const config = createConfig({
     chains: [localhost, hardhat],
     connectors: [
         injected({
-            target: "metaMask", // Can be any known injected wallet
+            target: "metaMask",
         }),
     ],
     transports: {

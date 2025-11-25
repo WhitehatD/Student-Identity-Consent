@@ -1,4 +1,3 @@
-// src/components/ui/StudentRegisterForm.tsx
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
 import { Input } from "./ui/input";
@@ -46,7 +45,6 @@ export default function StudentRegisterForm() {
 
             <CardContent>
                 <form className="grid gap-6" onSubmit={onSubmit}>
-                    {/* row 1 */}
                     <div className="grid md:grid-cols-2 gap-4">
                         <div>
                             <Label className="text-slate-200">Handle</Label>
@@ -59,13 +57,11 @@ export default function StudentRegisterForm() {
                         </div>
                     </div>
 
-                    {/* row 2 */}
                     <div>
                         <Label className="text-slate-200">University</Label>
                         <Input className="bg-slate-900 border-slate-700 text-slate-50" value={university} onChange={(e) => setUniversity(e.target.value)} />
                     </div>
 
-                    {/* row 3 */}
                     <div className="grid md:grid-cols-2 gap-4">
                         <div>
                             <Label className="text-slate-200">Enrollment year</Label>

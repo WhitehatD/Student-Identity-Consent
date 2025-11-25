@@ -1,4 +1,3 @@
-// src/pages/SearchPage.tsx
 import { useState, useEffect, useMemo } from "react";
 import { usePublicClient } from "wagmi";
 import { Link } from "react-router-dom";
@@ -7,24 +6,18 @@ import { addresses } from "@/contracts/addresses";
 import { eduIdentityAbi } from "@/abi/eduIdentity";
 import { parseAbiItem } from "viem";
 
-// --- Types ---
-
 type User = {
     address: `0x${string}`;
-    handle?: string; // For students
-    name?: string;   // For requesters
+    handle?: string;
+    name?: string;
     role: "Student" | "Requester";
 };
-
-// --- Component ---
 
 export default function SearchPage() {
     const publicClient = usePublicClient();
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [query, setQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
-
-    // --- Data Fetching ---
 
     useEffect(() => {
         if (!publicClient) return;
@@ -33,7 +26,6 @@ export default function SearchPage() {
             setIsLoading(true);
             const users: User[] = [];
 
-            // 1. Fetch all registered students
             const studentLogs = await publicClient.getLogs({
                 address: addresses.eduIdentity as `0x${string}`,
                 event: parseAbiItem('event StudentRegistered(address indexed student, string handle, bytes32 emailHash)'),
@@ -46,7 +38,6 @@ export default function SearchPage() {
                 users.push({ address: student!, handle: handle!, role: "Student" });
             }
 
-            // 2. Fetch all registered requesters
             const requesterLogs = await publicClient.getLogs({
                 address: addresses.eduIdentity as `0x${string}`,
                 event: parseAbiItem('event RequesterRegistered(address indexed requester, string name)'),
@@ -65,8 +56,6 @@ export default function SearchPage() {
 
         fetchUsers();
     }, [publicClient]);
-
-    // --- Filtering ---
 
     const filteredUsers = useMemo(() => {
         if (!query) return allUsers;
@@ -98,7 +87,6 @@ export default function SearchPage() {
                     />
                 </div>
 
-                {/* Search Results */}
                 <div className="space-y-4">
                     {isLoading ? (
                         <p className="text-slate-400">Loading user directory...</p>

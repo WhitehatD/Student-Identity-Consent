@@ -1,4 +1,3 @@
-// src/components/StudentConsents.tsx
 import { useState, FormEvent, useEffect } from "react";
 import { useAccount, useWriteContract, usePublicClient } from "wagmi";
 import {
@@ -23,8 +22,6 @@ import { addresses } from "@/contracts/addresses";
 import { eduConsentAbi } from "@/abi/eduConsent";
 import { parseAbiItem } from "viem";
 
-// --- Constants and Types ---
-
 const DATA_OPTIONS = {
     "Basic Profile": 0,
     "Academic Record": 1,
@@ -33,14 +30,12 @@ const DATA_OPTIONS = {
 const DATA_OPTIONS_REVERSE = ["Basic Profile", "Academic Record", "Social Profile"];
 
 type ConsentRow = {
-    id: string; // unique key: requester-dataType
+    id: string;
     requester: `0x${string}`;
     dataType: number;
     status: "active" | "revoked";
     expiresAt: bigint;
 };
-
-// --- Component ---
 
 export default function StudentConsents() {
     const { address } = useAccount();
@@ -48,11 +43,9 @@ export default function StudentConsents() {
     const { writeContract, isPending } = useWriteContract();
 
     const [requesterAddress, setRequesterAddress] = useState("");
-    const [selectedData, setSelectedData] = useState<number[]>([0]); // Default to Basic Profile
-    const [duration, setDuration] = useState(30); // Default to 30 days
+    const [selectedData, setSelectedData] = useState<number[]>([0]);
+    const [duration, setDuration] = useState(30);
     const [consents, setConsents] = useState<Map<string, ConsentRow>>(new Map());
-
-    // --- Data Fetching and Real-time Updates ---
 
     useEffect(() => {
         if (!address || !publicClient) return;
@@ -60,7 +53,6 @@ export default function StudentConsents() {
         const fetchLogs = async () => {
             const newConsents = new Map<string, ConsentRow>();
 
-            // 1. Get all past "ConsentGranted" events for this user
             const grantLogs = await publicClient.getLogs({
                 address: addresses.eduConsent as `0x${string}`,
                 event: parseAbiItem('event ConsentGranted(address indexed owner, address indexed requester, uint8 indexed dataType, uint64 expiresAt)'),
@@ -75,7 +67,6 @@ export default function StudentConsents() {
                 newConsents.set(id, { id, requester: requester!, dataType: dataType!, expiresAt: expiresAt!, status: 'active' });
             }
 
-            // 2. Get all past "ConsentRevoked" events and update status
             const revokeLogs = await publicClient.getLogs({
                 address: addresses.eduConsent as `0x${string}`,
                 event: parseAbiItem('event ConsentRevoked(address indexed owner, address indexed requester, uint8 dataType)'),
@@ -97,9 +88,6 @@ export default function StudentConsents() {
 
         fetchLogs();
     }, [address, publicClient]);
-
-
-    // --- UI Actions ---
 
     function toggleDataType(option: number) {
         setSelectedData((prev) =>
@@ -139,7 +127,6 @@ export default function StudentConsents() {
 
     return (
         <div className="space-y-6">
-            {/* Grant consent form */}
             <Card className="bg-slate-900/60 border-slate-800">
                 <CardHeader>
                     <CardTitle className="text-slate-50">Share Your Data</CardTitle>
@@ -201,7 +188,6 @@ export default function StudentConsents() {
                 </CardContent>
             </Card>
 
-            {/* Existing consents */}
             <Card className="bg-slate-900/60 border-slate-800">
                 <CardHeader>
                     <CardTitle className="text-slate-50">Your Consents</CardTitle>

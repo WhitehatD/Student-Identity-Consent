@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
@@ -10,11 +9,10 @@ import RequesterPage from "./pages/RequesterPage";
 import SearchPage from "./pages/SearchPage";
 import ProfilePage from "./pages/ProfilePage";
 import RegisterPage from "./pages/RegisterPage";
-import { Button } from "./components/ui/button"; // <-- Import Button
+import { Button } from "./components/ui/button";
 
 const PK_STORAGE_KEY = "burner-private-key";
 
-// A wrapper component to use useNavigate in the App component
 function AppContent() {
     const { address, isConnected } = useAccount();
     const { connect } = useConnect();
@@ -22,7 +20,7 @@ function AppContent() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (isConnected) return; // Prevent re-connecting on every render
+        if (isConnected) return;
         let pk = localStorage.getItem(PK_STORAGE_KEY);
         if (!pk) {
             pk = generatePrivateKey();
@@ -35,14 +33,11 @@ function AppContent() {
 
     return (
         <>
-            {/* NAVBAR */}
             <header className="w-full bg-slate-950/80 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
-                {/* left: logo */}
                 <div className="text-lg font-semibold text-slate-50">
                     EduChain<span className="text-emerald-400">.demo</span>
                 </div>
 
-                {/* middle: links */}
                 <nav className="flex items-center gap-6 text-sm text-slate-300">
                     <Link to="/" className="hover:text-slate-50">
                         Home
@@ -62,7 +57,6 @@ function AppContent() {
                     )}
                 </nav>
 
-                {/* right: wallet status */}
                 <div>
                     {isConnected && address ? (
                         <div className="flex items-center gap-4">
@@ -89,7 +83,6 @@ function AppContent() {
                 </div>
             </header>
 
-            {/* ROUTES */}
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/register" element={<RegisterPage />} />

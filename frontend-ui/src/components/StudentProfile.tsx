@@ -1,7 +1,5 @@
-// src/components/StudentProfile.tsx
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
 import { Label } from "./ui/label";
-
 
 type StudentProfileData = {
     registered: boolean;
