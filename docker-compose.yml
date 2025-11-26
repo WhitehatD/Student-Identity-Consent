@@ -1,0 +1,49 @@
+services:
+  hardhat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: student-identity-hardhat
+    environment:
+      NODE_ENV: development
+    ports:
+      - "8545:8545"
+    volumes:
+      - ./contracts:/app/contracts
+      - ./ignition:/app/ignition
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/deployment-complete || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 25s
+
+  database:
+    image: "postgis/postgis:16-3.4"
+    container_name: student-identity-postgres
+    environment:
+      POSTGRES_USER: internal_user
+      POSTGRES_PASSWORD: internal_pass
+      POSTGRES_DB: data
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./consentDatabase.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U internal_user -d data && psql -U internal_user -d data -c 'SELECT 1 FROM wallet LIMIT 1' > /dev/null 2>&1"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+    depends_on:
+      hardhat:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    name: student-identity-postgres-data
+
