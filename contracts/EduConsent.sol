@@ -23,11 +23,10 @@ contract EduConsent {
 
     enum DataType {
         BasicProfile,      // handle, displayName, profileCid
-        OffchainData     // e.g. transcripts, certificates (off-chain reference)
+        AcademicRecord,    // off-chain pointer to academic transcript
+        SocialProfile      // friends, posts, etc.
     }
 
-    // Optimized struct packing: reduced from 6 slots to 2 slots
-    // Saves ~40,000 gas per new consent (3 SSTORE operations eliminated)
     struct Consent {
         address owner;         // 20 bytes - Slot 0
         uint64 expiresAt;      // 8 bytes  - Slot 0
@@ -102,12 +101,10 @@ contract EduConsent {
         DataType dataType,
         uint16 durationDays
     ) external {
-        // Verify caller is a registered student
         if (identityContract.roles(msg.sender) != EduIdentity.Role.Student) {
             revert NotAStudent();
         }
 
-        // Verify requester is registered
         if (identityContract.roles(requester) != EduIdentity.Role.Requester) {
             revert NotARegisteredRequester();
         }
@@ -120,7 +117,6 @@ contract EduConsent {
         bytes32 consentKey = _key(msg.sender, requester, dataType);
         uint64 expiresAt = uint64(block.timestamp + uint256(durationDays) * 1 days);
 
-        // Create or update consent (optimized struct packing)
         consents[consentKey] = Consent({
             owner: msg.sender,
             expiresAt: expiresAt,
@@ -170,15 +166,12 @@ contract EduConsent {
 
     /**
      * @notice Access data with consent check and logging
-     * @dev Caller must be a registered requester with valid consent
-     * @dev This function only manages permissions - actual data remains off-chain
      * @return profileCid Pointer to off-chain data (IPFS CID or database reference)
      */
     function accessDataAndLog(
         address owner,
         DataType dataType
     ) external returns (string memory profileCid) {
-        // Verify caller is a registered requester
         if (identityContract.roles(msg.sender) != EduIdentity.Role.Requester) {
             revert NotARegisteredRequester();
         }
@@ -199,9 +192,6 @@ contract EduConsent {
         // Get student profile and return CID (pointer to off-chain data)
         EduIdentity.StudentProfile memory profile = identityContract.getStudentProfile(owner);
 
-        // Log successful data access with data hash for audit trail
-        // Note: Actual data remains off-chain (JSON, spreadsheet, etc.)
-        // Smart contract only stores permission records and access logs
         emit DataAccessed(
             owner,
             msg.sender,
@@ -215,7 +205,6 @@ contract EduConsent {
 
     /**
      * @notice Grant multiple consents in a single transaction
-     * @dev Saves ~21,000 gas per additional consent by batching
      * @param requesters Array of requester addresses
      * @param dataTypes Array of data types corresponding to each requester
      * @param durationDays Array of durations corresponding to each consent
@@ -225,14 +214,13 @@ contract EduConsent {
         DataType[] calldata dataTypes,
         uint16[] calldata durationDays
     ) external {
-        // Verify caller is a registered student (single check for all)
         if (identityContract.roles(msg.sender) != EduIdentity.Role.Student) {
             revert NotAStudent();
         }
 
         uint256 length = requesters.length;
         if (length != dataTypes.length || length != durationDays.length) {
-            revert InvalidDuration(); // Reusing error for array length mismatch
+            revert InvalidDuration();
         }
 
         uint256 totalRewards = 0;
@@ -242,12 +230,10 @@ contract EduConsent {
             DataType dataType = dataTypes[i];
             uint16 duration = durationDays[i];
 
-            // Verify requester is registered
             if (identityContract.roles(requester) != EduIdentity.Role.Requester) {
                 revert NotARegisteredRequester();
             }
 
-            // Validate duration
             if (duration < 1 || duration > 365) {
                 revert InvalidDuration();
             }
