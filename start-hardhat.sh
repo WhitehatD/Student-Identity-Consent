@@ -31,3 +31,6 @@ touch /tmp/deployment-complete
 
 echo "Hardhat is ready!"
 
+# Keep the script running to maintain the Hardhat node
+wait $HARDHAT_PID
+
