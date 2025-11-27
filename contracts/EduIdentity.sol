@@ -35,7 +35,7 @@ contract EduIdentity {
 
     struct RequesterProfile {
         bool registered;
-        string name;             // e.g. "CoolJobs" or "CoursePortal"
+        string name;             // e.g. CoolJobs or CoursePortal
         string description;      // short description
         string appUri;           // website/app link
     }
@@ -145,7 +145,6 @@ contract EduIdentity {
 
     /**
      * @notice Verify email ownership without revealing the actual email
-     * @dev Uses hash comparison for privacy-preserving verification
      * @param student Address of the student
      * @param emailToVerify Plain text email to verify (hashed on-chain)
      * @return bool True if the provided email matches the stored hash
