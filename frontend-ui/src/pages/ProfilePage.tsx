@@ -1,37 +1,58 @@
 import { useParams } from "react-router-dom";
 import { useReadContract } from "wagmi";
-import { addresses } from "@/contracts/addresses";
-import { eduIdentityAbi } from "@/abi/eduIdentity";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useContracts } from "@/lib/contractsContext";
+
+type StudentProfile = {
+    registered: boolean;
+    handle: string;
+    displayName: string;
+    university: string;
+    enrollmentYear: number;
+    emailHash: string;
+    profileCid: string;
+};
+
+type RequesterProfile = {
+    registered: boolean;
+    name: string;
+    description: string;
+    appUri: string;
+};
 
 export default function ProfilePage() {
     const { address } = useParams<{ address: `0x${string}` }>();
+    const { addresses, eduIdentityAbi } = useContracts();
+    const eduIdentityAddress = addresses.eduIdentity as `0x${string}`;
+
+    // Guard: Only enable contract calls if we have valid addresses
+    const canCallContract = !!address && !!eduIdentityAddress;
 
     const { data: role, isLoading: isLoadingRole } = useReadContract({
-        address: addresses.eduIdentity,
+        address: eduIdentityAddress,
         abi: eduIdentityAbi,
         functionName: "roles",
         args: [address!],
-        query: { enabled: !!address },
+        query: { enabled: canCallContract },
     });
 
     const { data: studentProfile, isLoading: isLoadingStudent } = useReadContract({
-        address: addresses.eduIdentity,
+        address: eduIdentityAddress,
         abi: eduIdentityAbi,
         functionName: "getStudentProfile",
         args: [address!],
-        query: { enabled: !!address && role === 1 },
-    });
+        query: { enabled: canCallContract && role === 1 },
+    }) as { data: StudentProfile | undefined; isLoading: boolean };
 
     const { data: requesterProfile, isLoading: isLoadingRequester } = useReadContract({
-        address: addresses.eduIdentity,
+        address: eduIdentityAddress,
         abi: eduIdentityAbi,
         functionName: "getRequesterProfile",
         args: [address!],
-        query: { enabled: !!address && role === 2 },
-    });
+        query: { enabled: canCallContract && role === 2 },
+    }) as { data: RequesterProfile | undefined; isLoading: boolean };
 
     const isLoading = isLoadingRole || isLoadingStudent || isLoadingRequester;
 

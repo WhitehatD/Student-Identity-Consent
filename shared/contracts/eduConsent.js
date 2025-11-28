@@ -438,4 +438,4 @@ export const eduConsentAbi = [
       "stateMutability": "view",
       "type": "function"
     }
-  ] as const;
+  ];

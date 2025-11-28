@@ -26,6 +26,13 @@ echo "Deploying contracts..."
 npx hardhat ignition deploy ./ignition/modules/EduSystem.ts --network localhost
 
 echo "Contracts deployed successfully!"
+
+echo "Generating shared contract ABIs and addresses..."
+npx hardhat run scripts/generate-shared-contracts.ts --network localhost
+
+echo "Funding wallets with ETH for gas fees..."
+npx hardhat run scripts/fund-wallets.ts --network localhost
+
 echo "Creating deployment complete marker..."
 touch /tmp/deployment-complete
 

@@ -15,8 +15,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { addresses } from "@/contracts/addresses";
 import { parseAbiItem } from "viem";
+import { useContracts } from "@/lib/contractsContext";
 
 const DATA_OPTIONS_REVERSE = ["Basic Profile", "Academic Record", "Social Profile"];
 
@@ -31,6 +31,8 @@ type LogRow = {
 export default function AuditLog() {
     const { address } = useAccount();
     const publicClient = usePublicClient();
+    const { addresses } = useContracts();
+    const consentAddress = addresses.eduConsent as `0x${string}`;
     const [logs, setLogs] = useState<LogRow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -42,7 +44,7 @@ export default function AuditLog() {
             const accessLogs: LogRow[] = [];
 
             const fetchedLogs = await publicClient.getLogs({
-                address: addresses.eduConsent as `0x${string}`,
+                address: consentAddress,
                 event: parseAbiItem('event AccessAttempt(address indexed owner, address indexed requester, uint8 indexed dataType, uint64 timestamp, bool granted)'),
                 args: { owner: address },
                 fromBlock: 0n,

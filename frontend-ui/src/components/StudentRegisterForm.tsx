@@ -1,12 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { useWriteContract } from "wagmi";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { keccak256, toHex } from "viem/utils";
-import { addresses } from ".././contracts/addresses";
-import { eduIdentityAbi } from "@/abi/eduIdentity";
+import { useContracts } from "@/lib/contractsContext";
 
 export default function StudentRegisterForm() {
     const [handle, setHandle] = useState("");
@@ -14,10 +14,24 @@ export default function StudentRegisterForm() {
     const [university, setUniversity] = useState("");
     const [enrollmentYear, setEnrollmentYear] = useState("");
     const [email, setEmail] = useState("");
+    const navigate = useNavigate();
 
     const { data: hash, isPending, writeContract } = useWriteContract();
+    const { addresses, eduIdentityAbi } = useContracts();
+    const contractAddress = addresses.eduIdentity as `0x${string}`;
 
-    async function onSubmit(e) {
+    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+        hash,
+    });
+
+    // Navigate to student page after successful registration
+    if (isConfirmed && hash) {
+        setTimeout(() => {
+            navigate("/student");
+        }, 500);
+    }
+
+    async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (!handle || !displayName || !university || !enrollmentYear || !email) {
             alert("Please fill in all fields.");
@@ -27,7 +41,7 @@ export default function StudentRegisterForm() {
         const emailHash = keccak256(toHex(email));
 
         writeContract({
-            address: addresses.eduIdentity as `0x${string}`,
+            address: contractAddress,
             abi: eduIdentityAbi,
             functionName: 'registerStudent',
             args: [handle, displayName, university, parseInt(enrollmentYear), emailHash, ""],
@@ -75,12 +89,18 @@ export default function StudentRegisterForm() {
                     </div>
 
                     <CardFooter className="p-0 pt-4">
-                        <Button size="lg" type="submit" disabled={isPending}>
-                            {isPending ? "Confirming..." : "Register"}
+                        <Button size="lg" type="submit" disabled={isPending || isConfirming}>
+                            {isPending ? "Waiting for signature..." : isConfirming ? "Confirming transaction..." : isConfirmed ? "Success! Redirecting..." : "Register"}
                         </Button>
                     </CardFooter>
 
-                    {hash && <div>Transaction Hash: {hash}</div>}
+                    {hash && (
+                        <div className="text-xs text-slate-400 break-all">
+                            Transaction: {hash}
+                            {isConfirming && " (confirming...)"}
+                            {isConfirmed && " ✓ Confirmed!"}
+                        </div>
+                    )}
                 </form>
             </CardContent>
         </Card>

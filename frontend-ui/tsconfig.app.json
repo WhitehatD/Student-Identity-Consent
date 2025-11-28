@@ -11,7 +11,8 @@
     /* ✅ Added for shadcn + absolute imports */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["../shared/*"]
     },
 
     /* Bundler mode */

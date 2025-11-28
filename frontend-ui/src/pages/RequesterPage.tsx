@@ -1,30 +1,47 @@
 import { useAccount, useReadContract } from "wagmi";
 import { Link } from "react-router-dom";
-import { addresses } from "../contracts/addresses";
-import { eduIdentityAbi } from "@/abi/eduIdentity";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import DataAccess from "@/components/DataAccess";
 import { Button } from "@/components/ui/button";
+import { useContracts } from "@/lib/contractsContext";
+
+type RequesterProfile = {
+    registered: boolean;
+    name: string;
+    description: string;
+    appUri: string;
+};
 
 export default function RequesterPage() {
     const { address, isConnected } = useAccount();
+    const { addresses, eduIdentityAbi } = useContracts();
+    const eduIdentityAddress = addresses.eduIdentity as `0x${string}`;
+
+    //Only enable contract calls if we have valid address and contract address
+    const canCallContract = isConnected && !!address && !!eduIdentityAddress;
 
     const { data: isRequester, isLoading: isRequesterLoading } = useReadContract({
-        address: addresses.eduIdentity as `0x${string}`,
+        address: eduIdentityAddress,
         abi: eduIdentityAbi,
         functionName: "isRequester",
         args: [address!],
-        query: { enabled: isConnected },
+        query: {
+            enabled: canCallContract,
+            refetchOnMount: true,
+        },
     });
 
     const { data: requesterProfile, isLoading: profileLoading } = useReadContract({
-        address: addresses.eduIdentity as `0x${string}`,
+        address: eduIdentityAddress,
         abi: eduIdentityAbi,
         functionName: "getRequesterProfile",
         args: [address!],
-        query: { enabled: isConnected && !!isRequester },
-    });
+        query: {
+            enabled: canCallContract && !!isRequester,
+            refetchOnMount: true,
+        },
+    }) as { data: RequesterProfile | undefined; isLoading: boolean };
 
     const isLoading = isRequesterLoading || profileLoading;
 

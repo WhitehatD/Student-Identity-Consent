@@ -1,4 +1,5 @@
-import { useState, FormEvent, useEffect } from "react";
+import { useState, useEffect } from "react";
+import type { FormEvent } from "react";
 import { useAccount, useWriteContract, usePublicClient } from "wagmi";
 import {
     Card,
@@ -18,9 +19,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { addresses } from "@/contracts/addresses";
-import { eduConsentAbi } from "@/abi/eduConsent";
 import { parseAbiItem } from "viem";
+import { useContracts } from "@/lib/contractsContext";
 
 const DATA_OPTIONS = {
     "Basic Profile": 0,
@@ -41,6 +41,8 @@ export default function StudentConsents() {
     const { address } = useAccount();
     const publicClient = usePublicClient();
     const { writeContract, isPending } = useWriteContract();
+    const { addresses, eduConsentAbi } = useContracts();
+    const consentAddress = addresses.eduConsent as `0x${string}`;
 
     const [requesterAddress, setRequesterAddress] = useState("");
     const [selectedData, setSelectedData] = useState<number[]>([0]);
@@ -50,11 +52,12 @@ export default function StudentConsents() {
     useEffect(() => {
         if (!address || !publicClient) return;
 
+
         const fetchLogs = async () => {
             const newConsents = new Map<string, ConsentRow>();
 
             const grantLogs = await publicClient.getLogs({
-                address: addresses.eduConsent as `0x${string}`,
+                address: consentAddress,
                 event: parseAbiItem('event ConsentGranted(address indexed owner, address indexed requester, uint8 indexed dataType, uint64 expiresAt)'),
                 args: { owner: address },
                 fromBlock: 0n,
@@ -68,7 +71,7 @@ export default function StudentConsents() {
             }
 
             const revokeLogs = await publicClient.getLogs({
-                address: addresses.eduConsent as `0x${string}`,
+                address: consentAddress,
                 event: parseAbiItem('event ConsentRevoked(address indexed owner, address indexed requester, uint8 dataType)'),
                 args: { owner: address },
                 fromBlock: 0n,
@@ -87,7 +90,7 @@ export default function StudentConsents() {
         };
 
         fetchLogs();
-    }, [address, publicClient]);
+    }, [address, publicClient, consentAddress]);
 
     function toggleDataType(option: number) {
         setSelectedData((prev) =>
@@ -102,12 +105,13 @@ export default function StudentConsents() {
         const requesters = requesterAddress.split(",").map(addr => addr.trim()).filter(addr => addr.startsWith("0x"));
         if (requesters.length === 0 || selectedData.length === 0 || !duration) return;
 
+
         const durations = Array(requesters.length * selectedData.length).fill(duration);
         const finalRequesters = requesters.flatMap(req => selectedData.map(() => req as `0x${string}`));
         const finalDataTypes = requesters.flatMap(() => selectedData);
 
         writeContract({
-            address: addresses.eduConsent as `0x${string}`,
+            address: consentAddress,
             abi: eduConsentAbi,
             functionName: "setConsentBatch",
             args: [finalRequesters, finalDataTypes, durations],
@@ -115,6 +119,7 @@ export default function StudentConsents() {
     }
 
     function handleRevoke(requester: `0x${string}`, dataType: number) {
+
         writeContract({
             address: addresses.eduConsent as `0x${string}`,
             abi: eduConsentAbi,

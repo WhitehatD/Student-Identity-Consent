@@ -1,18 +1,33 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { useWriteContract } from "wagmi";
-import { addresses } from "../contracts/addresses";
-import { eduIdentityAbi } from "@/abi/eduIdentity";
+import { useWriteContract, useAccount, useWaitForTransactionReceipt } from "wagmi";
+import { useContracts } from "@/lib/contractsContext";
 
 export default function RequesterRegisterForm() {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [appUri, setAppUri] = useState("");
+    const { address } = useAccount();
+    const navigate = useNavigate();
 
     const { data: hash, isPending, writeContract } = useWriteContract();
+    const { addresses, eduIdentityAbi } = useContracts();
+    const contractAddress = addresses.eduIdentity as `0x${string}`;
+
+    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+        hash,
+    });
+
+    // Navigate to requester page after successful registration
+    if (isConfirmed && hash) {
+        setTimeout(() => {
+            navigate("/requester");
+        }, 500);
+    }
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -20,9 +35,8 @@ export default function RequesterRegisterForm() {
             alert("Please fill in all fields.");
             return;
         }
-
         writeContract({
-            address: addresses.eduIdentity as `0x${string}`,
+            address: contractAddress,
             abi: eduIdentityAbi,
             functionName: 'registerRequester',
             args: [name, description, appUri],
@@ -33,9 +47,18 @@ export default function RequesterRegisterForm() {
         <Card className="bg-slate-900/60 border-slate-800">
             <CardHeader>
                 <CardTitle className="text-slate-50">Register as a Requester</CardTitle>
-                <CardDescription>
+                <CardDescription className="text-slate-400">
                     Create an on-chain identity for your organization to request data from students.
                 </CardDescription>
+                <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-md">
+                    <p className="text-sm text-slate-200">
+                        <strong>Note:</strong> You must use a different wallet address if you've already registered as a Student.
+                        Each address can only have one role (Student OR Requester).
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                        Current wallet: {address?.slice(0, 6)}...{address?.slice(-4)}
+                    </p>
+                </div>
             </CardHeader>
 
             <CardContent>
@@ -74,12 +97,18 @@ export default function RequesterRegisterForm() {
                     </div>
 
                     <CardFooter className="p-0 pt-4">
-                        <Button size="lg" type="submit" disabled={isPending}>
-                            {isPending ? "Confirming..." : "Register Requester"}
+                        <Button size="lg" type="submit" disabled={isPending || isConfirming}>
+                            {isPending ? "Waiting for signature..." : isConfirming ? "Confirming transaction..." : isConfirmed ? "Success! Redirecting..." : "Register Requester"}
                         </Button>
                     </CardFooter>
 
-                    {hash && <div>Transaction Hash: {hash}</div>}
+                    {hash && (
+                        <div className="text-xs text-slate-400 break-all">
+                            Transaction: {hash}
+                            {isConfirming && " (confirming...)"}
+                            {isConfirmed && " ✓ Confirmed!"}
+                        </div>
+                    )}
                 </form>
             </CardContent>
         </Card>

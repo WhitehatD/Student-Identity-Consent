@@ -4,13 +4,15 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY hardhat.config.ts ./
+COPY foundry.toml ./
 
 RUN npm ci
 
 COPY contracts ./contracts
 COPY ignition ./ignition
 COPY scripts ./scripts
-COPY hardhat.config.ts ./
+COPY shared ./shared
 COPY start-hardhat.sh ./
 
 # skip tests

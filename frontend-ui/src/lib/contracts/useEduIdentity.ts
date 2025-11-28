@@ -1,13 +1,13 @@
 import { useReadContract } from "wagmi";
-import { eduIdentityAbi } from "@/abi/eduIdentity";
-import { addresses } from "@/contracts/addresses";
-
-const EDU_IDENTITY_ADDRESS = addresses.eduIdentity as `0x${string}`;
+import { useContracts } from "@/lib/contractsContext";
 
 export function useIsStudent(address?: `0x${string}`) {
+    const { addresses, eduIdentityAbi } = useContracts();
+    const eduIdentityAddress = addresses.eduIdentity as `0x${string}`;
+
     return useReadContract({
         abi: eduIdentityAbi,
-        address: EDU_IDENTITY_ADDRESS,
+        address: eduIdentityAddress,
         functionName: "isStudent",
         args: address ? [address] : undefined,
         query: {

@@ -1,4 +1,5 @@
-import { useState, FormEvent } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import { useAccount, useReadContract } from "wagmi";
 import {
     Card,
@@ -12,8 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addresses } from "@/contracts/addresses";
-import { eduConsentAbi } from "@/abi/eduConsent";
+import { useContracts } from "@/lib/contractsContext";
 
 const DATA_OPTIONS = {
     "Basic Profile": 0,
@@ -23,12 +23,14 @@ const DATA_OPTIONS = {
 
 export default function DataAccess() {
     const { address: requesterAddress } = useAccount();
+    const { addresses, eduConsentAbi } = useContracts();
+    const consentAddress = addresses.eduConsent as `0x${string}`;
     const [studentAddress, setStudentAddress] = useState("");
     const [dataType, setDataType] = useState(0);
     const [submitted, setSubmitted] = useState(false);
 
     const { data: hasConsent, refetch, isFetching } = useReadContract({
-        address: addresses.eduConsent as `0x${string}`,
+        address: consentAddress,
         abi: eduConsentAbi,
         functionName: "hasValidConsent",
         args: [studentAddress as `0x${string}`, requesterAddress!, dataType],

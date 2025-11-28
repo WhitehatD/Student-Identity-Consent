@@ -1,8 +1,6 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { injected } from "wagmi/connectors";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { useAccount, useConnect, useDisconnect, useChainId } from "wagmi";
 import Home from "./pages/Home";
 import StudentPage from "./pages/StudentPage";
 import RequesterPage from "./pages/RequesterPage";
@@ -10,26 +8,88 @@ import SearchPage from "./pages/SearchPage";
 import ProfilePage from "./pages/ProfilePage";
 import RegisterPage from "./pages/RegisterPage";
 import { Button } from "./components/ui/button";
-
-const PK_STORAGE_KEY = "burner-private-key";
+import { switchToHardhatNetwork } from "./lib/wallet";
+import { config as appConfig } from "./config";
 
 function AppContent() {
     const { address, isConnected } = useAccount();
-    const { connect } = useConnect();
+    const { connect, connectors } = useConnect();
     const { disconnect } = useDisconnect();
+    const chainId = useChainId();
     const navigate = useNavigate();
 
+    // Check network when connected
     useEffect(() => {
-        if (isConnected) return;
-        let pk = localStorage.getItem(PK_STORAGE_KEY);
-        if (!pk) {
-            pk = generatePrivateKey();
-            localStorage.setItem(PK_STORAGE_KEY, pk);
+        if (isConnected) {
+            console.log('Connected! Chain ID:', chainId);
+            if (chainId !== 31337) {
+                console.log('Wrong network detected. Current:', chainId, 'Expected: 31337');
+                console.log('Please switch to Hardhat Local network in MetaMask');
+            } else {
+                console.log('Connected to Hardhat Local (31337)');
+            }
         }
-        const account = privateKeyToAccount(pk as `0x${string}`);
-        
-        connect({ connector: injected(), account });
-    }, [connect, isConnected]);
+    }, [isConnected, chainId]);
+
+    // Listen for network changes in MetaMask
+    useEffect(() => {
+        if (!window.ethereum) return;
+
+        const handleChainChanged = (newChainId: string) => {
+            console.log('Network changed to:', newChainId);
+            window.location.reload();
+        };
+
+        window.ethereum.on('chainChanged', handleChainChanged);
+
+        return () => {
+            window.ethereum?.removeListener('chainChanged', handleChainChanged);
+        };
+    }, []);
+
+    const handleConnect = async () => {
+        try {
+            // Check if MetaMask is available
+            const metaMaskProvider = window.ethereum?.providers?.find((p: any) => p.isMetaMask)
+                || (window.ethereum?.isMetaMask ? window.ethereum : undefined);
+
+            if (!metaMaskProvider) {
+                alert('MetaMask is not installed! Please install MetaMask to continue.');
+                return;
+            }
+
+            // First check current network
+            const currentChainId = await metaMaskProvider.request({ method: 'eth_chainId' });
+            console.log('Current chain ID:', currentChainId);
+
+            // MUST be on Hardhat network before connecting
+            if (currentChainId !== '0x7A69') {
+                console.log('Wrong network, attempting to switch to Hardhat...');
+                const switched = await switchToHardhatNetwork();
+                if (!switched) {
+                    alert('Please switch to Hardhat Local network in MetaMask to continue.\n\nNetwork: Hardhat Local\nChain ID: 31337\nRPC URL: http://localhost:8545');
+                    return;
+                }
+                // Wait a bit for the switch to complete
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            // Then connect with MetaMask connector
+            const metaMaskConnector = connectors[0]; // Our MetaMask-specific connector
+            if (metaMaskConnector) {
+                await connect({ connector: metaMaskConnector });
+                navigate("/register");
+            }
+        } catch (error) {
+            console.error('Failed to connect:', error);
+            alert('Failed to connect. Make sure you\'re on Hardhat Local network.');
+        }
+    };
+
+    const handleDisconnect = () => {
+        disconnect();
+        navigate("/");
+    };
 
     return (
         <>
@@ -60,13 +120,18 @@ function AppContent() {
                 <div>
                     {isConnected && address ? (
                         <div className="flex items-center gap-4">
+                            {chainId !== appConfig.chainId && (
+                                <div className="rounded-full bg-yellow-500/20 border border-yellow-500/50 px-3 py-1 text-xs text-yellow-400 flex items-center gap-2">
+                                    Wrong Network
+                                </div>
+                            )}
                             <div className="rounded-full bg-slate-800 px-4 py-1 text-xs font-mono text-slate-200">
                                 {address.slice(0, 6)}...{address.slice(-4)}
                             </div>
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => disconnect()}
+                                onClick={handleDisconnect}
                                 className="border-slate-700 text-slate-200 hover:bg-slate-800"
                             >
                                 Disconnect
@@ -74,10 +139,10 @@ function AppContent() {
                         </div>
                     ) : (
                         <Button
-                            onClick={() => navigate("/register")}
+                            onClick={handleConnect}
                             className="rounded-full bg-emerald-500 px-4 py-1 text-xs font-medium text-slate-950 hover:bg-emerald-400"
                         >
-                            Register / Connect
+                            Connect Wallet
                         </Button>
                     )}
                 </div>
@@ -102,3 +167,5 @@ export default function App() {
         </BrowserRouter>
     );
 }
+
+

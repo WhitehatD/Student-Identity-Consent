@@ -34,46 +34,26 @@ contract ScalabilityTest is Test {
         token.setConsentContract(address(consent));
     }
 
-    /**
-     * @notice Test with 10 users (5 students, 5 requesters)
-     */
     function test_Scalability_10Users() public {
         _testScenario(10, "Small Scale - 10 Users");
     }
 
-    /**
-     * @notice Test with 50 users (25 students, 25 requesters)
-     */
     function test_Scalability_50Users() public {
         _testScenario(50, "Medium Scale - 50 Users");
     }
 
-    /**
-     * @notice Test with 100 users (50 students, 50 requesters)
-     */
     function test_Scalability_100Users() public {
         _testScenario(100, "Large Scale - 100 Users");
     }
 
-    /**
-     * @notice Test with 500 users (250 students, 250 requesters)
-     */
     function test_Scalability_500Users() public {
         _testScenario(500, "Enterprise Scale - 500 Users");
     }
 
-    /**
-     * @notice Test with 1000 users (500 students, 500 requesters)
-     */
     function test_Scalability_1000Users() public {
         _testScenario(1000, "Large Enterprise - 1000 Users");
     }
 
-    /**
-     * @notice Core scalability test logic
-     * @param userCount Total number of users to simulate
-     * @param description Test description
-     */
     function _testScenario(uint256 userCount, string memory description) internal {
         console.log("\n========================================");
         console.log(description);
@@ -175,9 +155,6 @@ contract ScalabilityTest is Test {
         console.log("  Avg Gas per Access:", gasUsed / accessCount);
     }
 
-    /**
-     * @notice Verify system integrity after scalability test
-     */
     function _verifySystemState(
         uint256 studentCount,
         uint256 requesterCount,
@@ -200,9 +177,6 @@ contract ScalabilityTest is Test {
         console.log("\n[VERIFICATION] System state verified successfully!");
     }
 
-    /**
-     * @notice Test concurrent consent operations
-     */
     function test_ConcurrentOperations() public {
         uint256 userCount = 20;
 
@@ -258,9 +232,6 @@ contract ScalabilityTest is Test {
         console.log("  Avg Gas per Operation:", gasUsed / 12);
     }
 
-    /**
-     * @notice Test data type diversity scaling
-     */
     function test_MultipleDataTypes() public {
         uint256 studentCount = 10;
 
@@ -318,39 +289,22 @@ contract ScalabilityTest is Test {
     // BATCH CONSENT SCALABILITY TESTS
     // ============================================
 
-    /**
-     * @notice Test batch consent with 10 students (3 consents each)
-     */
     function test_BatchConsent_10Students() public {
         _testBatchScenario(10, "Batch Consent - 10 Students");
     }
 
-    /**
-     * @notice Test batch consent with 50 students (3 consents each)
-     */
     function test_BatchConsent_50Students() public {
         _testBatchScenario(50, "Batch Consent - 50 Students");
     }
 
-    /**
-     * @notice Test batch consent with 100 students (3 consents each)
-     */
     function test_BatchConsent_100Students() public {
         _testBatchScenario(100, "Batch Consent - 100 Students");
     }
 
-    /**
-     * @notice Test batch consent with 250 students (3 consents each)
-     */
     function test_BatchConsent_250Students() public {
         _testBatchScenario(250, "Batch Consent - 250 Students");
     }
 
-    /**
-     * @notice Core batch scalability test logic
-     * @param studentCount Number of students to test with
-     * @param description Test description
-     */
     function _testBatchScenario(uint256 studentCount, string memory description) internal {
         console.log("\n========================================");
         console.log(description);
@@ -473,9 +427,6 @@ contract ScalabilityTest is Test {
         console.log("\n========================================\n");
     }
 
-    /**
-     * @notice Direct comparison test: Single vs Batch for same student
-     */
     function test_BatchVsSingle_DirectComparison() public {
         console.log("\n========================================");
         console.log("DIRECT COMPARISON: Single vs Batch");
@@ -576,9 +527,6 @@ contract ScalabilityTest is Test {
         assertEq(token.balanceOf(batchStudent), consent.REWARD_PER_CONSENT() * 3);
     }
 
-    /**
-     * @notice Test batch operations with varying batch sizes
-     */
     function test_BatchSizeComparison() public {
         console.log("\n========================================");
         console.log("BATCH SIZE COMPARISON");

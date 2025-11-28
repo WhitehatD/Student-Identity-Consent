@@ -1,29 +1,39 @@
 import { useAccount, useReadContract } from "wagmi";
 import { Link } from "react-router-dom";
-import { addresses } from "../contracts/addresses";
 import StudentProfile from "@/components/StudentProfile";
 import StudentConsents from "@/components/StudentConsents";
 import AuditLog from "@/components/AuditLog";
-import { eduIdentityAbi } from "@/abi/eduIdentity";
 import { Button } from "@/components/ui/button";
+import { useContracts } from "@/lib/contractsContext";
 
 export default function StudentPage() {
     const { address, isConnected } = useAccount();
+    const { addresses, eduIdentityAbi } = useContracts();
+    const eduIdentityAddress = addresses.eduIdentity as `0x${string}`;
+
+    //Only enable contract calls if we have valid address and contract address
+    const canCallContract = isConnected && !!address && !!eduIdentityAddress;
 
     const { data: isStudent, isLoading: isStudentLoading } = useReadContract({
-        address: addresses.eduIdentity as `0x${string}`,
+        address: eduIdentityAddress,
         abi: eduIdentityAbi,
         functionName: "isStudent",
         args: [address!],
-        query: { enabled: isConnected },
+        query: {
+            enabled: canCallContract,
+            refetchOnMount: true,
+        },
     });
 
     const { data: studentProfile, isLoading: profileLoading } = useReadContract({
-        address: addresses.eduIdentity as `0x${string}`,
+        address: eduIdentityAddress,
         abi: eduIdentityAbi,
         functionName: "getStudentProfile",
         args: [address!],
-        query: { enabled: isConnected && !!isStudent },
+        query: {
+            enabled: canCallContract && !!isStudent,
+            refetchOnMount: true,
+        },
     });
 
     const isLoading = isStudentLoading || profileLoading;

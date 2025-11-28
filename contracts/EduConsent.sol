@@ -166,7 +166,7 @@ contract EduConsent {
 
     /**
      * @notice Access data with consent check and logging
-     * @return profileCid Pointer to off-chain data (IPFS CID or database reference)
+     * @return profileCid Pointer to off-chain data (database reference)
      */
     function accessDataAndLog(
         address owner,
@@ -189,7 +189,6 @@ contract EduConsent {
 
         if (!hasConsent) revert NoValidConsent();
 
-        // Get student profile and return CID (pointer to off-chain data)
         EduIdentity.StudentProfile memory profile = identityContract.getStudentProfile(owner);
 
         emit DataAccessed(

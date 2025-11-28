@@ -30,7 +30,7 @@ contract EduIdentity {
         string university;       // "Maastricht University"
         uint16 enrollmentYear;   // e.g. 2023
         bytes32 emailHash;       // keccak256(email)
-        string profileCid;       // IPFS / off-chain JSON with full profile
+        string profileCid;       // database pointer with full profile
     }
 
     struct RequesterProfile {
@@ -81,7 +81,7 @@ contract EduIdentity {
     }
 
     /**
-     * @notice Update student's profile CID (pointer to off-chain data)
+     * @notice Update student's profile CID (pointer to database data)
      */
     function updateStudentProfileCid(string calldata newCid) external {
         if (roles[msg.sender] != Role.Student) revert NotAStudent();
@@ -157,7 +157,6 @@ contract EduIdentity {
 
     /**
      * @notice Helper function to compute email hash off-chain before registration
-     * @dev This allows users to pre-compute their email hash for privacy
      * @param email The email to hash
      * @return bytes32 The keccak256 hash of the email
      */

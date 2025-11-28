@@ -1,0 +1,19 @@
+{
+  "name": "@student-identity-platform/shared",
+  "version": "1.0.0",
+  "description": "Shared contract ABIs and configurations",
+  "type": "module",
+  "main": "./contracts/index.js",
+  "types": "./contracts/index.ts",
+  "exports": {
+    ".": {
+      "import": "./contracts/index.js",
+      "types": "./contracts/index.ts"
+    },
+    "./contracts": {
+      "import": "./contracts/index.js",
+      "types": "./contracts/index.ts"
+    }
+  }
+}
+

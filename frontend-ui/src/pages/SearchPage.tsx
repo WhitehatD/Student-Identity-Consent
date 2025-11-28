@@ -2,9 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import { usePublicClient } from "wagmi";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { addresses } from "@/contracts/addresses";
-import { eduIdentityAbi } from "@/abi/eduIdentity";
+import { Button } from "@/components/ui/button";
 import { parseAbiItem } from "viem";
+import { useContracts } from "@/lib/contractsContext";
 
 type User = {
     address: `0x${string}`;
@@ -15,6 +15,8 @@ type User = {
 
 export default function SearchPage() {
     const publicClient = usePublicClient();
+    const { addresses } = useContracts();
+    const eduIdentityAddress = addresses.eduIdentity as `0x${string}`;
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [query, setQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
@@ -27,7 +29,7 @@ export default function SearchPage() {
             const users: User[] = [];
 
             const studentLogs = await publicClient.getLogs({
-                address: addresses.eduIdentity as `0x${string}`,
+                address: eduIdentityAddress,
                 event: parseAbiItem('event StudentRegistered(address indexed student, string handle, bytes32 emailHash)'),
                 fromBlock: 0n,
                 toBlock: 'latest'
@@ -39,7 +41,7 @@ export default function SearchPage() {
             }
 
             const requesterLogs = await publicClient.getLogs({
-                address: addresses.eduIdentity as `0x${string}`,
+                address: eduIdentityAddress,
                 event: parseAbiItem('event RequesterRegistered(address indexed requester, string name)'),
                 fromBlock: 0n,
                 toBlock: 'latest'
