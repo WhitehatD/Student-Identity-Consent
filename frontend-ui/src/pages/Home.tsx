@@ -8,7 +8,7 @@ export default function Home() {
             <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 md:py-16">
                 <section className="space-y-4">
                     <p className="text-sm uppercase tracking-[0.2em] text-emerald-400">
-                        weeee
+                        BlockChains group 4
                     </p>
                     <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
                         Own your student data.

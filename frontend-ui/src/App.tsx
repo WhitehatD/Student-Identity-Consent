@@ -95,7 +95,7 @@ function AppContent() {
         <>
             <header className="w-full bg-slate-950/80 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
                 <div className="text-lg font-semibold text-slate-50">
-                    EduChain<span className="text-emerald-400">.demo</span>
+                    EduChain<span className="text-emerald-400"></span>
                 </div>
 
                 <nav className="flex items-center gap-6 text-sm text-slate-300">

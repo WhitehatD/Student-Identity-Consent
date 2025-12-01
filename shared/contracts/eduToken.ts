@@ -1,5 +1,5 @@
 // Auto-generated from artifacts - DO NOT EDIT MANUALLY
-// Generated at: 2025-11-28T23:42:47.579Z
+// Generated at: 2025-12-01T08:51:55.901Z
 
 export const eduTokenAbi = [
   {
