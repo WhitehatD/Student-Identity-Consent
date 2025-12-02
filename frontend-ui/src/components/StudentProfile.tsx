@@ -28,16 +28,16 @@ export default function StudentProfile({ profile }: { profile: StudentProfileDat
                     </div>
                     <div>
                         <Label>Display Name</Label>
-                        <p className="text-lg">{profile.displayName}</p>
+                        <p className="text-lg text-foreground">{profile.displayName}</p>
                     </div>
                 </div>
                 <div>
                     <Label>University</Label>
-                    <p className="text-lg">{profile.university}</p>
+                    <p className="text-lg text-foreground">{profile.university}</p>
                 </div>
                 <div>
                     <Label>Enrollment Year</Label>
-                    <p className="text-lg">{profile.enrollmentYear.toString()}</p>
+                    <p className="text-lg text-foreground">{profile.enrollmentYear.toString()}</p>
                 </div>
                 <div>
                     <Label>Profile CID</Label>

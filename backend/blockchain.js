@@ -1,14 +1,14 @@
 import { ethers } from 'ethers';
 import { eduConsentAbi, eduIdentityAbi, eduTokenAbi, CONTRACTS } from '@student-identity-platform/shared';
 
-// Initialize provider and contracts
+
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL || 'http://127.0.0.1:8545');
 
 const consentContractAddress = CONTRACTS.EduConsent;
 const identityContractAddress = CONTRACTS.EduIdentity;
 const tokenContractAddress = CONTRACTS.EduToken;
 
-// Initialize contract instances with shared ABIs
+
 const consentContract = new ethers.Contract(
     consentContractAddress,
     eduConsentAbi,
@@ -27,12 +27,6 @@ const tokenContract = new ethers.Contract(
     provider
 );
 
-/**
- * Validate and normalize an Ethereum address
- * @param {string} address - Ethereum address to validate
- * @returns {string} - Checksummed address
- * @throws {Error} - If address is invalid
- */
 function validateAddress(address) {
     if (!address) {
         throw new Error('Address is required');
@@ -45,13 +39,6 @@ function validateAddress(address) {
     return ethers.getAddress(address);
 }
 
-/**
- * Check if a requester has valid consent to access a specific data type
- * @param {string} ownerAddress - Student/owner's wallet address
- * @param {string} requesterAddress - Requester's wallet address
- * @param {number} dataType - Data type ID (0-2)
- * @returns {Promise<boolean>}
- */
 export async function hasValidConsent(ownerAddress, requesterAddress, dataType) {
     try {
         const validOwnerAddress = validateAddress(ownerAddress);
@@ -69,13 +56,6 @@ export async function hasValidConsent(ownerAddress, requesterAddress, dataType) 
     }
 }
 
-/**
- * Get the full consent details for a specific data type
- * @param {string} ownerAddress - Student/owner's wallet address
- * @param {string} requesterAddress - Requester's wallet address
- * @param {number} dataType - Data type ID (0: BasicProfile, 1: AcademicRecord, 2: SocialProfile)
- * @returns {Promise<Object>}
- */
 export async function getConsentDetails(ownerAddress, requesterAddress, dataType) {
     try {
         const validOwnerAddress = validateAddress(ownerAddress);
@@ -97,13 +77,6 @@ export async function getConsentDetails(ownerAddress, requesterAddress, dataType
     }
 }
 
-/**
- * Check if a requester has consent for multiple data types
- * @param {string} studentAddress - Student's wallet address
- * @param {string} requesterAddress - Requester's wallet address
- * @param {number[]} dataTypes - Array of data type IDs
- * @returns {Promise<Object>} - Map of dataType to boolean
- */
 export async function checkMultipleConsents(studentAddress, requesterAddress, dataTypes) {
     const results = {};
 
@@ -132,4 +105,3 @@ export default {
         token: tokenContractAddress
     }
 };
-

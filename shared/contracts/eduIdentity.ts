@@ -1,6 +1,3 @@
-// Auto-generated from artifacts - DO NOT EDIT MANUALLY
-// Generated at: 2025-12-01T08:51:55.904Z
-
 export const eduIdentityAbi = [
   {
     "inputs": [],

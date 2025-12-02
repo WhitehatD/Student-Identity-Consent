@@ -18,7 +18,6 @@ function AppContent() {
     const chainId = useChainId();
     const navigate = useNavigate();
 
-    // Check network when connected
     useEffect(() => {
         if (isConnected) {
             console.log('Connected! Chain ID:', chainId);
@@ -31,7 +30,6 @@ function AppContent() {
         }
     }, [isConnected, chainId]);
 
-    // Listen for network changes in MetaMask
     useEffect(() => {
         if (!window.ethereum) return;
 
@@ -49,7 +47,7 @@ function AppContent() {
 
     const handleConnect = async () => {
         try {
-            // Check if MetaMask is available
+
             const metaMaskProvider = window.ethereum?.providers?.find((p: any) => p.isMetaMask)
                 || (window.ethereum?.isMetaMask ? window.ethereum : undefined);
 
@@ -58,11 +56,10 @@ function AppContent() {
                 return;
             }
 
-            // First check current network
+
             const currentChainId = await metaMaskProvider.request({ method: 'eth_chainId' });
             console.log('Current chain ID:', currentChainId);
 
-            // MUST be on Hardhat network before connecting
             if (currentChainId !== '0x7A69') {
                 console.log('Wrong network, attempting to switch to Hardhat...');
                 const switched = await switchToHardhatNetwork();
@@ -70,12 +67,10 @@ function AppContent() {
                     alert('Please switch to Hardhat Local network in MetaMask to continue.\n\nNetwork: Hardhat Local\nChain ID: 31337\nRPC URL: http://localhost:8545');
                     return;
                 }
-                // Wait a bit for the switch to complete
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
 
-            // Then connect with MetaMask connector
-            const metaMaskConnector = connectors[0]; // Our MetaMask-specific connector
+            const metaMaskConnector = connectors[0]; 
             if (metaMaskConnector) {
                 await connect({ connector: metaMaskConnector });
                 navigate("/register");
@@ -95,7 +90,7 @@ function AppContent() {
         <>
             <header className="w-full bg-slate-950/80 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
                 <div className="text-lg font-semibold text-slate-50">
-                    EduChain<span className="text-emerald-400"></span>
+                    EduCon<span className="text-emerald-400"></span>
                 </div>
 
                 <nav className="flex items-center gap-6 text-sm text-slate-300">
@@ -129,10 +124,9 @@ function AppContent() {
                                 {address.slice(0, 6)}...{address.slice(-4)}
                             </div>
                             <Button
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
                                 onClick={handleDisconnect}
-                                className="border-slate-700 text-slate-200 hover:bg-slate-800"
                             >
                                 Disconnect
                             </Button>
@@ -167,5 +161,3 @@ export default function App() {
         </BrowserRouter>
     );
 }
-
-

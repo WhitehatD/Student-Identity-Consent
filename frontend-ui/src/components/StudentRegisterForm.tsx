@@ -24,7 +24,6 @@ export default function StudentRegisterForm() {
         hash,
     });
 
-    // Navigate to student page after successful registration
     if (isConfirmed && hash) {
         setTimeout(() => {
             navigate("/student");

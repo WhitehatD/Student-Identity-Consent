@@ -55,12 +55,23 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%}
 }
-
+.text-card-foreground{
+  color: white!important;
+}
+.text-foreground{
+  color: white!important;
+}
 @layer base {
   * {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background;
+  }
+}
+
+@layer components {
+  .label-dark-mode-color {
+    @apply text-slate-50;
   }
 }

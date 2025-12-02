@@ -22,7 +22,6 @@ export default function RequesterRegisterForm() {
         hash,
     });
 
-    // Navigate to requester page after successful registration
     if (isConfirmed && hash) {
         setTimeout(() => {
             navigate("/requester");

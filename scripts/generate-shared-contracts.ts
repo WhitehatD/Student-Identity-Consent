@@ -17,7 +17,6 @@ const contracts = [
 const backendContractsDir = path.join(__dirname, '../backend/contracts');
 const deployedAddressesPath = path.join(__dirname, '../ignition/deployments/chain-31337/deployed_addresses.json');
 
-// Ensure backend contracts directory exists
 if (!fs.existsSync(backendContractsDir)) {
   fs.mkdirSync(backendContractsDir, { recursive: true });
 }
@@ -27,27 +26,19 @@ for (const contract of contracts) {
   const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
   const contractNameLower = contract.name.charAt(0).toLowerCase() + contract.name.slice(1);
 
-  // Generate TypeScript version for frontend
   const tsOutputFile = path.join(sharedDir, `${contractNameLower}.ts`);
-  const tsContent = `// Auto-generated from artifacts - DO NOT EDIT MANUALLY
-// Generated at: ${new Date().toISOString()}
-
-export const ${contractNameLower}Abi = ${JSON.stringify(artifact.abi, null, 2)} as const;
+  const tsContent = `export const ${contractNameLower}Abi = ${JSON.stringify(artifact.abi, null, 2)} as const;
 `;
   fs.writeFileSync(tsOutputFile, tsContent);
   console.log(`Generated ${contract.name} ABI (TypeScript)`);
 
   const jsOutputFile = path.join(backendContractsDir, `${contractNameLower}.js`);
-  const jsContent = `// Auto-generated from artifacts - DO NOT EDIT MANUALLY
-// Generated at: ${new Date().toISOString()}
-
-export const ${contractNameLower}Abi = ${JSON.stringify(artifact.abi, null, 2)};
+  const jsContent = `export const ${contractNameLower}Abi = ${JSON.stringify(artifact.abi, null, 2)};
 `;
   fs.writeFileSync(jsOutputFile, jsContent);
   console.log(`Generated ${contract.name} ABI (JavaScript)`);
 }
 
-// Generate addresses file from deployed_addresses.json
 if (fs.existsSync(deployedAddressesPath)) {
   const deployedAddresses = JSON.parse(fs.readFileSync(deployedAddressesPath, 'utf8'));
 
@@ -57,14 +48,12 @@ if (fs.existsSync(deployedAddressesPath)) {
     eduConsent: deployedAddresses['EduSystem#EduConsent'],
   };
 
-  // TypeScript version
   const tsAddressesFile = path.join(sharedDir, 'addresses.ts');
   const tsAddressesContent = `export const addresses = ${JSON.stringify(addresses, null, 4)};
 `;
   fs.writeFileSync(tsAddressesFile, tsAddressesContent);
   console.log('Generated addresses.ts');
 
-  // JavaScript version for backend
   const jsAddressesFile = path.join(backendContractsDir, 'addresses.js');
   const jsAddressesContent = `export const addresses = ${JSON.stringify(addresses, null, 4)};
 `;

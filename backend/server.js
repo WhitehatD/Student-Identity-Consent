@@ -6,15 +6,13 @@ import pool from './db.js';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'], // Vite and React dev servers
+    origin: ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging middleware
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
@@ -28,10 +26,8 @@ app.get('/health', (req, res) => {
     });
 });
 
-// API routes
 app.use('/api', apiRoutes);
 
-// 404 handler
 app.use((req, res) => {
     res.status(404).json({
         error: 'Not Found',
@@ -60,7 +56,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server
 async function startServer() {
     try {
         await pool.query('SELECT NOW()');
@@ -100,7 +95,6 @@ async function startServer() {
     }
 }
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server');
     pool.end(() => {
@@ -118,4 +112,3 @@ process.on('SIGINT', () => {
 });
 
 startServer();
-

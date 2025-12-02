@@ -6,42 +6,26 @@ import DataAccess from "@/components/DataAccess";
 import { Button } from "@/components/ui/button";
 import { useContracts } from "@/lib/contractsContext";
 
-type RequesterProfile = {
-    registered: boolean;
-    name: string;
-    description: string;
-    appUri: string;
-};
-
 export default function RequesterPage() {
     const { address, isConnected } = useAccount();
     const { addresses, eduIdentityAbi } = useContracts();
-    const eduIdentityAddress = addresses.eduIdentity as `0x${string}`;
-
-    //Only enable contract calls if we have valid address and contract address
-    const canCallContract = isConnected && !!address && !!eduIdentityAddress;
+    const contractAddress = addresses.eduIdentity as `0x${string}`;
 
     const { data: isRequester, isLoading: isRequesterLoading } = useReadContract({
-        address: eduIdentityAddress,
+        address: contractAddress,
         abi: eduIdentityAbi,
         functionName: "isRequester",
         args: [address!],
-        query: {
-            enabled: canCallContract,
-            refetchOnMount: true,
-        },
+        query: { enabled: isConnected },
     });
 
     const { data: requesterProfile, isLoading: profileLoading } = useReadContract({
-        address: eduIdentityAddress,
+        address: contractAddress,
         abi: eduIdentityAbi,
         functionName: "getRequesterProfile",
         args: [address!],
-        query: {
-            enabled: canCallContract && !!isRequester,
-            refetchOnMount: true,
-        },
-    }) as { data: RequesterProfile | undefined; isLoading: boolean };
+        query: { enabled: isConnected && !!isRequester },
+    });
 
     const isLoading = isRequesterLoading || profileLoading;
 
@@ -51,7 +35,7 @@ export default function RequesterPage() {
                 <div className="text-center">
                     <p className="text-slate-400">Please connect your wallet to view your requester profile.</p>
                     <Link to="/register">
-                        <Button className="mt-4">Register / Connect</Button>
+                        <Button className="mt-4">Connect Wallet</Button>
                     </Link>
                 </div>
             );
@@ -92,7 +76,7 @@ export default function RequesterPage() {
             <div className="text-center">
                 <p className="text-slate-400">This wallet is not registered as a requester.</p>
                 <Link to="/register">
-                    <Button variant="outline" className="mt-4">Go to Registration</Button>
+                    <Button variant="secondary" className="mt-4">Go to Registration</Button>
                 </Link>
             </div>
         );

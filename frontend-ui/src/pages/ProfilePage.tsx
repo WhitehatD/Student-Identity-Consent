@@ -72,7 +72,7 @@ export default function ProfilePage() {
                         <div className="grid md:grid-cols-2 gap-4">
                             <div>
                                 <Label>Handle</Label>
-                                <p className="text-lg font-mono text-emerald-400">@{studentProfile.handle}</p>
+                                <p className="text-lg font-mono text-slate-50">@{studentProfile.handle}</p>
                             </div>
                             <div>
                                 <Label>Display Name</Label>
@@ -99,11 +99,11 @@ export default function ProfilePage() {
                         <p className="font-mono text-xs text-slate-400 break-all">{address}</p>
                         <div>
                             <Label>Name</Label>
-                            <p className="text-lg font-bold">{requesterProfile.name}</p>
+                            <p className="text-slate-50 font-bold">{requesterProfile.name}</p>
                         </div>
                         <div>
                             <Label>Description</Label>
-                            <p className="text-base">{requesterProfile.description}</p>
+                            <p className="text-base text-slate-50">{requesterProfile.description}</p>
                         </div>
                         <div>
                             <Label>Website</Label>

@@ -1,3 +1,4 @@
+--Gpt generated fake data
 -- =========================================
 -- DROP TABLES IF THEY EXIST (for fresh start)
 -- =========================================

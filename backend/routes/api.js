@@ -21,16 +21,10 @@ const DATA_TYPES = [
     { id: 2, name: 'SocialProfile', description: 'Social connections, posts, and activities' }
 ];
 
-/**
- * POST /api/wallets
- * Create a new wallet record and return a CID
- * This is called during student registration BEFORE the blockchain transaction
- */
 router.post('/wallets', async (req, res) => {
     try {
         const { walletAddress, displayName } = req.body;
 
-        // Validate input
         if (!walletAddress || !displayName) {
             return res.status(400).json({
                 error: 'Missing required fields',
@@ -38,7 +32,6 @@ router.post('/wallets', async (req, res) => {
             });
         }
 
-        // Check if wallet already exists
         const existingWallet = await pool.query(
             'SELECT cid FROM wallet WHERE wallet_address = $1',
             [walletAddress]
@@ -51,10 +44,8 @@ router.post('/wallets', async (req, res) => {
             });
         }
 
-        // Generate a unique CID
         const cid = `cid_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-        // Insert the new wallet
         const result = await pool.query(
             'INSERT INTO wallet (wallet_address, cid, display_name) VALUES ($1, $2, $3) RETURNING *',
             [walletAddress, cid, displayName]
@@ -71,7 +62,6 @@ router.post('/wallets', async (req, res) => {
     } catch (error) {
         console.error('Error creating wallet:', error);
 
-        // Handle unique constraint violations
         if (error.code === '23505') {
             return res.status(409).json({
                 error: 'Duplicate entry',
@@ -86,17 +76,11 @@ router.post('/wallets', async (req, res) => {
     }
 });
 
-/**
- * GET /api/student-data/:cid
- * Fetch student's off-chain data
- * Requires requester address in headers for consent verification
- */
 router.get('/student-data/:cid', async (req, res) => {
     try {
         const { cid } = req.params;
         const requesterAddress = req.headers['x-requester-address'];
 
-        // Validate requester address
         if (!requesterAddress) {
             return res.status(401).json({
                 error: 'Unauthorized',
@@ -104,7 +88,6 @@ router.get('/student-data/:cid', async (req, res) => {
             });
         }
 
-        // Get student wallet address from CID
         const walletResult = await pool.query(
             'SELECT wallet_address, display_name FROM wallet WHERE cid = $1',
             [cid]
@@ -120,8 +103,6 @@ router.get('/student-data/:cid', async (req, res) => {
         const studentAddress = walletResult.rows[0].wallet_address;
         const displayName = walletResult.rows[0].display_name;
 
-        // Check consents for all three data types defined in the contract
-        // 0: BasicProfile, 1: AcademicRecord, 2: SocialProfile
         const consents = await checkMultipleConsents(
             studentAddress,
             requesterAddress,
@@ -130,14 +111,12 @@ router.get('/student-data/:cid', async (req, res) => {
 
         console.log(`Consent check for ${requesterAddress} accessing ${studentAddress}:`, consents);
 
-        // Prepare response data based on consents
         const responseData = {
             basicProfile: null,
             academicRecord: null,
             socialProfile: null
         };
 
-        // If requester has consent for BasicProfile (0), include basic info
         if (consents[0]) {
             responseData.basicProfile = {
                 displayName: displayName,
@@ -149,7 +128,6 @@ router.get('/student-data/:cid', async (req, res) => {
             console.log(`No consent for BasicProfile`);
         }
 
-        // If requester has consent for AcademicRecord (1), include grades and certificates
         if (consents[1]) {
             const gradesResult = await pool.query(`
                 SELECT 
@@ -185,8 +163,6 @@ router.get('/student-data/:cid', async (req, res) => {
             console.log(`No consent for AcademicRecord`);
         }
 
-        // If requester has consent for SocialProfile (2), include social data
-        // Note: Currently no social data in database, but structure is ready
         if (consents[2]) {
             responseData.socialProfile = {
                 message: 'Social profile data not yet implemented',
@@ -214,10 +190,6 @@ router.get('/student-data/:cid', async (req, res) => {
     }
 });
 
-/**
- * GET /api/data-types
- * Return the list of available data types
- */
 router.get('/data-types', async (req, res) => {
     try {
         res.json({
@@ -233,10 +205,6 @@ router.get('/data-types', async (req, res) => {
     }
 });
 
-/**
- * GET /api/wallet/:address
- * Get wallet CID by address
- */
 router.get('/wallet/:address', async (req, res) => {
     try {
         const { address } = req.params;
@@ -267,15 +235,10 @@ router.get('/wallet/:address', async (req, res) => {
     }
 });
 
-/**
- * GET /api/blockchain/student/:address
- * Get student profile from blockchain
- */
 router.get('/blockchain/student/:address', async (req, res) => {
     try {
         const { address } = req.params;
 
-        // Check if address is a student
         const isStudent = await identityContract.isStudent(address);
         if (!isStudent) {
             return res.status(404).json({
@@ -284,7 +247,6 @@ router.get('/blockchain/student/:address', async (req, res) => {
             });
         }
 
-        // Get student profile from blockchain
         const profile = await identityContract.getStudentProfile(address);
 
         res.json({
@@ -309,15 +271,10 @@ router.get('/blockchain/student/:address', async (req, res) => {
     }
 });
 
-/**
- * GET /api/blockchain/requester/:address
- * Get requester profile from blockchain
- */
 router.get('/blockchain/requester/:address', async (req, res) => {
     try {
         const { address } = req.params;
 
-        // Check if address is a requester
         const isRequester = await identityContract.isRequester(address);
         if (!isRequester) {
             return res.status(404).json({
@@ -326,7 +283,6 @@ router.get('/blockchain/requester/:address', async (req, res) => {
             });
         }
 
-        // Get requester profile from blockchain
         const profile = await identityContract.getRequesterProfile(address);
 
         res.json({
@@ -348,15 +304,10 @@ router.get('/blockchain/requester/:address', async (req, res) => {
     }
 });
 
-/**
- * GET /api/blockchain/consent/:studentAddress/:requesterAddress/:dataType
- * Get detailed consent information from blockchain
- */
 router.get('/blockchain/consent/:studentAddress/:requesterAddress/:dataType', async (req, res) => {
     try {
         const { studentAddress, requesterAddress, dataType } = req.params;
 
-        // Validate dataType is 0, 1, or 2
         const dataTypeNum = parseInt(dataType);
         if (isNaN(dataTypeNum) || dataTypeNum < 0 || dataTypeNum > 2) {
             return res.status(400).json({
@@ -365,7 +316,6 @@ router.get('/blockchain/consent/:studentAddress/:requesterAddress/:dataType', as
             });
         }
 
-        // Get consent details from blockchain
         const consentDetails = await getConsentDetails(studentAddress, requesterAddress, dataTypeNum);
 
         if (!consentDetails || !consentDetails.exists) {
@@ -375,7 +325,6 @@ router.get('/blockchain/consent/:studentAddress/:requesterAddress/:dataType', as
             });
         }
 
-        // Check if consent is currently valid
         const isValid = await hasValidConsent(studentAddress, requesterAddress, dataTypeNum);
 
         res.json({
@@ -396,11 +345,6 @@ router.get('/blockchain/consent/:studentAddress/:requesterAddress/:dataType', as
     }
 });
 
-/**
- * POST /api/blockchain/check-consents
- * Check multiple consents at once
- * Body: { studentAddress, requesterAddress, dataTypes: [0, 1, 2] }
- */
 router.post('/blockchain/check-consents', async (req, res) => {
     try {
         const { studentAddress, requesterAddress, dataTypes } = req.body;
@@ -412,7 +356,6 @@ router.post('/blockchain/check-consents', async (req, res) => {
             });
         }
 
-        // Validate all dataTypes
         for (const dt of dataTypes) {
             if (typeof dt !== 'number' || dt < 0 || dt > 2) {
                 return res.status(400).json({
@@ -440,10 +383,6 @@ router.post('/blockchain/check-consents', async (req, res) => {
     }
 });
 
-/**
- * GET /api/contracts/meta
- * Expose current contract addresses and ABIs for the frontend
- */
 router.get('/contracts/meta', (req, res) => {
     res.json({
         success: true,
@@ -458,5 +397,3 @@ router.get('/contracts/meta', (req, res) => {
 });
 
 export default router;
-
-

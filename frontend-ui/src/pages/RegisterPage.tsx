@@ -21,7 +21,7 @@ export default function RegisterPage() {
 
     const handleConnectWallet = async () => {
         try {
-            // Check if MetaMask is available
+
             const metaMaskProvider = window.ethereum?.providers?.find((p: any) => p.isMetaMask)
                 || (window.ethereum?.isMetaMask ? window.ethereum : undefined);
 
@@ -30,11 +30,9 @@ export default function RegisterPage() {
                 return;
             }
 
-            // Check current network
             const currentChainId = await metaMaskProvider.request({ method: 'eth_chainId' });
             console.log('Current chain ID:', currentChainId);
 
-            // MUST be on Hardhat network
             if (currentChainId !== '0x7A69') {
                 console.log('Wrong network, attempting to switch...');
                 const switched = await switchToHardhatNetwork();
@@ -42,11 +40,10 @@ export default function RegisterPage() {
                     alert('Please switch to Hardhat Local network in MetaMask.\n\nChain ID: 31337\nRPC URL: http://localhost:8545');
                     return;
                 }
-                // Wait for switch to complete
+
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
 
-            // Connect with MetaMask connector
             const metaMaskConnector = connectors[0];
             if (metaMaskConnector) {
                 await connect({ connector: metaMaskConnector });

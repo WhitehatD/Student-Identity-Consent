@@ -8,9 +8,8 @@ async function main() {
 
   const [deployer] = await viem.getWalletClients();
 
-  //put whatever wallets you want here
   const walletsToFund = [
-    "0x2a156a493ac65936d47454d544acd09a9b5fcdd6",
+    "0xcf0e813d81ebcf56b1ac17a0296d9ab4e5d18cec",
   ];
 
   const amountInEth = "100";
@@ -40,4 +39,3 @@ main()
     console.error(error);
     process.exit(1);
   });
-

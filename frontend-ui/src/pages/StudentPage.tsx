@@ -11,7 +11,6 @@ export default function StudentPage() {
     const { addresses, eduIdentityAbi } = useContracts();
     const eduIdentityAddress = addresses.eduIdentity as `0x${string}`;
 
-    //Only enable contract calls if we have valid address and contract address
     const canCallContract = isConnected && !!address && !!eduIdentityAddress;
 
     const { data: isStudent, isLoading: isStudentLoading } = useReadContract({

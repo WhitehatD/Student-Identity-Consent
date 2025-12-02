@@ -15,7 +15,6 @@ COPY scripts ./scripts
 COPY shared ./shared
 COPY start-hardhat.sh ./
 
-# skip tests
 RUN npx hardhat compile --force
 
 RUN chmod +x start-hardhat.sh
@@ -23,4 +22,3 @@ RUN chmod +x start-hardhat.sh
 EXPOSE 8545
 
 CMD ["./start-hardhat.sh"]
-
