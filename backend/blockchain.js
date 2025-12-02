@@ -4,9 +4,28 @@ import { eduConsentAbi, eduIdentityAbi, eduTokenAbi, CONTRACTS } from '@student-
 
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL || 'http://127.0.0.1:8545');
 
-const consentContractAddress = CONTRACTS.EduConsent;
-const identityContractAddress = CONTRACTS.EduIdentity;
-const tokenContractAddress = CONTRACTS.EduToken;
+function validateAddress(address) {
+    if (!address) {
+        throw new Error('Address is required');
+    }
+
+    try {
+        return ethers.getAddress(address);
+    } catch (error) {
+        if (typeof address === 'string') {
+            try {
+                return ethers.getAddress(address.toLowerCase());
+            } catch (innerError) {
+                throw new Error(`Invalid Ethereum address: ${address}`);
+            }
+        }
+        throw new Error(`Invalid Ethereum address: ${address}`);
+    }
+}
+
+const consentContractAddress = validateAddress(CONTRACTS.EduConsent);
+const identityContractAddress = validateAddress(CONTRACTS.EduIdentity);
+const tokenContractAddress = validateAddress(CONTRACTS.EduToken);
 
 
 const consentContract = new ethers.Contract(
@@ -27,17 +46,7 @@ const tokenContract = new ethers.Contract(
     provider
 );
 
-function validateAddress(address) {
-    if (!address) {
-        throw new Error('Address is required');
-    }
 
-    if (!ethers.isAddress(address)) {
-        throw new Error(`Invalid Ethereum address: ${address}`);
-    }
-
-    return ethers.getAddress(address);
-}
 
 export async function hasValidConsent(ownerAddress, requesterAddress, dataType) {
     try {
@@ -87,13 +96,82 @@ export async function checkMultipleConsents(studentAddress, requesterAddress, da
     return results;
 }
 
+export async function getConsentLogs(studentAddress) {
+    try {
+        const validStudentAddress = validateAddress(studentAddress);
+
+        const grantFilter = consentContract.filters.ConsentGranted(validStudentAddress);
+        const grantLogs = await consentContract.queryFilter(grantFilter);
+
+        const revokeFilter = consentContract.filters.ConsentRevoked(validStudentAddress);
+        const revokeLogs = await consentContract.queryFilter(revokeFilter);
+
+        const consents = new Map();
+
+        for (const log of grantLogs) {
+            let args = log.args;
+            if (!args) {
+                try {
+                    const parsed = consentContract.interface.parseLog({ topics: log.topics, data: log.data });
+                    args = parsed ? parsed.args : null;
+                } catch (e) {
+                    console.warn("Failed to parse grant log:", e);
+                }
+            }
+
+            if (args) {
+                const { requester, dataType, expiresAt } = args;
+                const id = `${requester}-${dataType}`;
+                consents.set(id, {
+                    id,
+                    requester,
+                    dataType: Number(dataType),
+                    expiresAt: expiresAt.toString(),
+                    status: 'active',
+                    blockNumber: log.blockNumber
+                });
+            }
+        }
+        for (const log of revokeLogs) {
+            let args = log.args;
+            if (!args) {
+                try {
+                    const parsed = consentContract.interface.parseLog({ topics: log.topics, data: log.data });
+                    args = parsed ? parsed.args : null;
+                } catch (e) {
+                    console.warn("Failed to parse revoke log:", e);
+                }
+            }
+
+            if (args) {
+                const { requester, dataType } = args;
+                const id = `${requester}-${dataType}`;
+                if (consents.has(id)) {
+                    if (log.blockNumber > consents.get(id).blockNumber) {
+                        consents.get(id).status = 'revoked';
+                    }
+                }
+            }
+        }
+
+        return Array.from(consents.values());
+    } catch (error) {
+        console.error('Error fetching consent logs:', error);
+        return [];
+    }
+}
+
 export { consentContract, identityContract, tokenContract, provider };
 export { consentContractAddress, identityContractAddress, tokenContractAddress };
 
 export default {
     hasValidConsent,
     getConsentDetails,
+    hasValidConsent,
+    getConsentDetails,
     checkMultipleConsents,
+    getConsentLogs,
+
     contracts: {
         consent: consentContract,
         identity: identityContract,

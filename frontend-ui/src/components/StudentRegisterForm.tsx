@@ -4,9 +4,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { keccak256, toHex } from "viem/utils";
-import { useContracts } from "@/lib/contractsContext";
+import { eduIdentityAbi, CONTRACTS } from "@student-identity-platform/shared";
+import { api } from "@/lib/api";
 
 export default function StudentRegisterForm() {
     const [handle, setHandle] = useState("");
@@ -14,37 +15,72 @@ export default function StudentRegisterForm() {
     const [university, setUniversity] = useState("");
     const [enrollmentYear, setEnrollmentYear] = useState("");
     const [email, setEmail] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [txHash, setTxHash] = useState<string | null>(null);
+
+    const { address } = useAccount();
+    const { writeContractAsync } = useWriteContract();
+    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+        hash: txHash as `0x${string}`,
+    });
     const navigate = useNavigate();
 
-    const { data: hash, isPending, writeContract } = useWriteContract();
-    const { addresses, eduIdentityAbi } = useContracts();
-    const contractAddress = addresses.eduIdentity as `0x${string}`;
-
-    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-        hash,
-    });
-
-    if (isConfirmed && hash) {
+    if (isConfirmed) {
         setTimeout(() => {
             navigate("/student");
-        }, 500);
+        }, 2000);
     }
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
+        if (!address) {
+            alert("Please connect your wallet.");
+            return;
+        }
         if (!handle || !displayName || !university || !enrollmentYear || !email) {
             alert("Please fill in all fields.");
             return;
         }
 
-        const emailHash = keccak256(toHex(email));
+        setIsSubmitting(true);
+        setTxHash(null);
 
-        writeContract({
-            address: contractAddress,
-            abi: eduIdentityAbi,
-            functionName: 'registerStudent',
-            args: [handle, displayName, university, parseInt(enrollmentYear), emailHash, ""],
-        });
+        try {
+            const emailHash = keccak256(toHex(email));
+
+            let profileCid = "";
+            try {
+                const walletRes = await api.registerWallet(address, displayName);
+                profileCid = walletRes.cid;
+            } catch (apiErr) {
+                console.error("Backend registration failed:", apiErr);
+                profileCid = `bafy${Math.random().toString(36).substring(2)}`;
+                alert("Warning: Backend registration failed. Your profile data may not be viewable.");
+            }
+
+            const hash = await writeContractAsync({
+                address: CONTRACTS.EduIdentity as `0x${string}`,
+                abi: eduIdentityAbi,
+                functionName: "registerStudent",
+                args: [
+                    handle,
+                    displayName,
+                    university,
+                    parseInt(enrollmentYear),
+                    emailHash,
+                    profileCid
+                ],
+            });
+
+            setTxHash(hash);
+
+            setTxHash(hash);
+        } catch (error: any) {
+            console.error("Registration failed:", error);
+            alert(`Registration failed: ${error.message}`);
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
     return (
@@ -88,16 +124,17 @@ export default function StudentRegisterForm() {
                     </div>
 
                     <CardFooter className="p-0 pt-4">
-                        <Button size="lg" type="submit" disabled={isPending || isConfirming}>
-                            {isPending ? "Waiting for signature..." : isConfirming ? "Confirming transaction..." : isConfirmed ? "Success! Redirecting..." : "Register"}
+                        <Button size="lg" type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? "Check Wallet..." : isConfirming ? "Confirming..." : "Register"}
                         </Button>
                     </CardFooter>
 
-                    {hash && (
+                    {txHash && (
                         <div className="text-xs text-slate-400 break-all">
-                            Transaction: {hash}
-                            {isConfirming && " (confirming...)"}
-                            {isConfirmed && " ✓ Confirmed!"}
+                            Transaction: {txHash}
+                            <br />
+                            {isConfirming && <span className="text-yellow-400">Waiting for confirmation...</span>}
+                            {isConfirmed && <span className="text-emerald-400">Confirmed! Redirecting...</span>}
                         </div>
                     )}
                 </form>

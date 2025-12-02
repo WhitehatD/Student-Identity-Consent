@@ -32,7 +32,7 @@ for (const contract of contracts) {
   fs.writeFileSync(tsOutputFile, tsContent);
   console.log(`Generated ${contract.name} ABI (TypeScript)`);
 
-  const jsOutputFile = path.join(backendContractsDir, `${contractNameLower}.js`);
+  const jsOutputFile = path.join(sharedDir, `${contractNameLower}.js`);
   const jsContent = `export const ${contractNameLower}Abi = ${JSON.stringify(artifact.abi, null, 2)};
 `;
   fs.writeFileSync(jsOutputFile, jsContent);
@@ -54,7 +54,7 @@ if (fs.existsSync(deployedAddressesPath)) {
   fs.writeFileSync(tsAddressesFile, tsAddressesContent);
   console.log('Generated addresses.ts');
 
-  const jsAddressesFile = path.join(backendContractsDir, 'addresses.js');
+  const jsAddressesFile = path.join(sharedDir, 'addresses.js');
   const jsAddressesContent = `export const addresses = ${JSON.stringify(addresses, null, 4)};
 `;
   fs.writeFileSync(jsAddressesFile, jsAddressesContent);

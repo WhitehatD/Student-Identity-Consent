@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
-import { useAccount, useWriteContract, usePublicClient } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
+import { getAddress } from "viem";
+import { eduConsentAbi, CONTRACTS } from "@student-identity-platform/shared";
 import {
     Card,
     CardHeader,
@@ -19,8 +21,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { parseAbiItem } from "viem";
-import { useContracts } from "@/lib/contractsContext";
+import { api } from "@/lib/api";
 
 const DATA_OPTIONS = {
     "Basic Profile": 0,
@@ -31,66 +32,39 @@ const DATA_OPTIONS_REVERSE = ["Basic Profile", "Academic Record", "Social Profil
 
 type ConsentRow = {
     id: string;
-    requester: `0x${string}`;
+    requester: string;
     dataType: number;
     status: "active" | "revoked";
-    expiresAt: bigint;
+    expiresAt: string;
 };
 
 export default function StudentConsents() {
     const { address } = useAccount();
-    const publicClient = usePublicClient();
-    const { writeContract, isPending } = useWriteContract();
-    const { addresses, eduConsentAbi } = useContracts();
-    const consentAddress = addresses.eduConsent as `0x${string}`;
+    const { writeContractAsync } = useWriteContract();
 
     const [requesterAddress, setRequesterAddress] = useState("");
     const [selectedData, setSelectedData] = useState<number[]>([0]);
     const [duration, setDuration] = useState(30);
-    const [consents, setConsents] = useState<Map<string, ConsentRow>>(new Map());
+    const [consents, setConsents] = useState<ConsentRow[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const fetchLogs = async () => {
+        if (!address) return;
+        setIsLoading(true);
+        try {
+            const data = await api.getStudentConsents(address);
+            setConsents(data.consents);
+        } catch (error) {
+            console.error("Error fetching consents:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if (!address || !publicClient) return;
-
-
-        const fetchLogs = async () => {
-            const newConsents = new Map<string, ConsentRow>();
-
-            const grantLogs = await publicClient.getLogs({
-                address: consentAddress,
-                event: parseAbiItem('event ConsentGranted(address indexed owner, address indexed requester, uint8 indexed dataType, uint64 expiresAt)'),
-                args: { owner: address },
-                fromBlock: 0n,
-                toBlock: 'latest'
-            });
-
-            for (const log of grantLogs) {
-                const { requester, dataType, expiresAt } = log.args;
-                const id = `${requester}-${dataType}`;
-                newConsents.set(id, { id, requester: requester!, dataType: dataType!, expiresAt: expiresAt!, status: 'active' });
-            }
-
-            const revokeLogs = await publicClient.getLogs({
-                address: consentAddress,
-                event: parseAbiItem('event ConsentRevoked(address indexed owner, address indexed requester, uint8 dataType)'),
-                args: { owner: address },
-                fromBlock: 0n,
-                toBlock: 'latest'
-            });
-
-            for (const log of revokeLogs) {
-                const { requester, dataType } = log.args;
-                const id = `${requester}-${dataType}`;
-                if (newConsents.has(id)) {
-                    newConsents.get(id)!.status = 'revoked';
-                }
-            }
-            
-            setConsents(newConsents);
-        };
-
         fetchLogs();
-    }, [address, publicClient, consentAddress]);
+    }, [address]);
 
     function toggleDataType(option: number) {
         setSelectedData((prev) =>
@@ -100,35 +74,61 @@ export default function StudentConsents() {
         );
     }
 
-    function handleGrant(e: FormEvent) {
+    async function handleGrant(e: FormEvent) {
         e.preventDefault();
-        const requesters = requesterAddress.split(",").map(addr => addr.trim()).filter(addr => addr.startsWith("0x"));
+        if (!address) return;
+
+        const requesters = requesterAddress
+            .split(",")
+            .map(addr => addr.trim())
+            .filter(addr => addr.startsWith("0x"))
+            .map(addr => getAddress(addr)); // Checksum the address
+
         if (requesters.length === 0 || selectedData.length === 0 || !duration) return;
 
-
-        const durations = Array(requesters.length * selectedData.length).fill(duration);
-        const finalRequesters = requesters.flatMap(req => selectedData.map(() => req as `0x${string}`));
-        const finalDataTypes = requesters.flatMap(() => selectedData);
-
-        writeContract({
-            address: consentAddress,
-            abi: eduConsentAbi,
-            functionName: "setConsentBatch",
-            args: [finalRequesters, finalDataTypes, durations],
-        });
+        setIsSubmitting(true);
+        try {
+            for (const req of requesters) {
+                for (const dt of selectedData) {
+                    await writeContractAsync({
+                        address: CONTRACTS.EduConsent as `0x${string}`,
+                        abi: eduConsentAbi,
+                        functionName: "setConsent",
+                        args: [req as `0x${string}`, dt, duration],
+                    });
+                }
+            }
+            await fetchLogs();
+            setRequesterAddress("");
+            setSelectedData([0]);
+        } catch (error: any) {
+            console.error("Error granting consent:", error);
+            alert(`Error: ${error.message}`);
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
-    function handleRevoke(requester: `0x${string}`, dataType: number) {
+    async function handleRevoke(requester: string, dataType: number) {
+        if (!address) return;
+        if (!confirm("Are you sure you want to revoke this consent?")) return;
 
-        writeContract({
-            address: addresses.eduConsent as `0x${string}`,
-            abi: eduConsentAbi,
-            functionName: "revokeConsent",
-            args: [requester, dataType],
-        });
+        setIsSubmitting(true);
+        try {
+            await writeContractAsync({
+                address: CONTRACTS.EduConsent as `0x${string}`,
+                abi: eduConsentAbi,
+                functionName: "revokeConsent",
+                args: [requester as `0x${string}`, dataType],
+            });
+            await fetchLogs();
+        } catch (error: any) {
+            console.error("Error revoking consent:", error);
+            alert(`Error: ${error.message}`);
+        } finally {
+            setIsSubmitting(false);
+        }
     }
-
-    const consentList = Array.from(consents.values());
 
     return (
         <div className="space-y-6">
@@ -186,8 +186,8 @@ export default function StudentConsents() {
                             </div>
                         </div>
 
-                        <Button type="submit" className="px-6" disabled={isPending}>
-                            {isPending ? "Granting..." : "Grant Consent"}
+                        <Button type="submit" className="px-6" disabled={isSubmitting}>
+                            {isSubmitting ? "Granting..." : "Grant Consent"}
                         </Button>
                     </form>
                 </CardContent>
@@ -201,7 +201,9 @@ export default function StudentConsents() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {consentList.length === 0 ? (
+                    {isLoading ? (
+                        <p className="text-sm text-slate-400">Loading consents...</p>
+                    ) : consents.length === 0 ? (
                         <p className="text-sm text-slate-400">
                             You haven't granted access to anyone yet.
                         </p>
@@ -217,7 +219,7 @@ export default function StudentConsents() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {consentList.map((row) => (
+                                {consents.map((row) => (
                                     <TableRow key={row.id}>
                                         <TableCell className="font-mono text-xs">{row.requester}</TableCell>
                                         <TableCell className="text-sm">
@@ -239,7 +241,7 @@ export default function StudentConsents() {
                                                     size="sm"
                                                     className="border-slate-700 text-slate-200 hover:bg-slate-800"
                                                     onClick={() => handleRevoke(row.requester, row.dataType)}
-                                                    disabled={isPending}
+                                                    disabled={isSubmitting}
                                                 >
                                                     Revoke
                                                 </Button>

@@ -4,42 +4,60 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { useWriteContract, useAccount, useWaitForTransactionReceipt } from "wagmi";
-import { useContracts } from "@/lib/contractsContext";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { eduIdentityAbi, CONTRACTS } from "@student-identity-platform/shared";
 
 export default function RequesterRegisterForm() {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [appUri, setAppUri] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [txHash, setTxHash] = useState<string | null>(null);
+
     const { address } = useAccount();
+    const { writeContractAsync } = useWriteContract();
+    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+        hash: txHash as `0x${string}`,
+    });
     const navigate = useNavigate();
 
-    const { data: hash, isPending, writeContract } = useWriteContract();
-    const { addresses, eduIdentityAbi } = useContracts();
-    const contractAddress = addresses.eduIdentity as `0x${string}`;
-
-    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-        hash,
-    });
-
-    if (isConfirmed && hash) {
+    if (isConfirmed) {
         setTimeout(() => {
             navigate("/requester");
-        }, 500);
+        }, 2000);
     }
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
+        if (!address) {
+            alert("Please connect your wallet.");
+            return;
+        }
         if (!name || !description || !appUri) {
             alert("Please fill in all fields.");
             return;
         }
-        writeContract({
-            address: contractAddress,
-            abi: eduIdentityAbi,
-            functionName: 'registerRequester',
-            args: [name, description, appUri],
-        });
+
+        setIsSubmitting(true);
+        setTxHash(null);
+
+        try {
+            const hash = await writeContractAsync({
+                address: CONTRACTS.EduIdentity as `0x${string}`,
+                abi: eduIdentityAbi,
+                functionName: "registerRequester",
+                args: [name, description, appUri],
+            });
+
+            setTxHash(hash);
+
+            setTxHash(hash);
+        } catch (error: any) {
+            console.error("Registration failed:", error);
+            alert(`Registration failed: ${error.message}`);
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
     return (
@@ -96,16 +114,17 @@ export default function RequesterRegisterForm() {
                     </div>
 
                     <CardFooter className="p-0 pt-4">
-                        <Button size="lg" type="submit" disabled={isPending || isConfirming}>
-                            {isPending ? "Waiting for signature..." : isConfirming ? "Confirming transaction..." : isConfirmed ? "Success! Redirecting..." : "Register Requester"}
+                        <Button size="lg" type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? "Check Wallet..." : isConfirming ? "Confirming..." : "Register Requester"}
                         </Button>
                     </CardFooter>
 
-                    {hash && (
+                    {txHash && (
                         <div className="text-xs text-slate-400 break-all">
-                            Transaction: {hash}
-                            {isConfirming && " (confirming...)"}
-                            {isConfirmed && " ✓ Confirmed!"}
+                            Transaction: {txHash}
+                            <br />
+                            {isConfirming && <span className="text-yellow-400">Waiting for confirmation...</span>}
+                            {isConfirmed && <span className="text-emerald-400">Confirmed! Redirecting...</span>}
                         </div>
                     )}
                 </form>

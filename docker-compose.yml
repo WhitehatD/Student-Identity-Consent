@@ -10,6 +10,10 @@ services:
       - "8545:8545"
     volumes:
       - ./shared:/app/shared
+      - ./contracts:/app/contracts
+      - ./ignition:/app/ignition
+      - ./scripts:/app/scripts
+      - ./hardhat.config.ts:/app/hardhat.config.ts
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "test -f /tmp/deployment-complete || exit 1" ]

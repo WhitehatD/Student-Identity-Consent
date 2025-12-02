@@ -19,13 +19,19 @@ export default function RequesterPage() {
         query: { enabled: isConnected },
     });
 
+    interface RequesterProfile {
+        name: string;
+        description: string;
+        appUri: string;
+    }
+
     const { data: requesterProfile, isLoading: profileLoading } = useReadContract({
         address: contractAddress,
         abi: eduIdentityAbi,
         functionName: "getRequesterProfile",
         args: [address!],
         query: { enabled: isConnected && !!isRequester },
-    });
+    }) as { data: RequesterProfile | undefined, isLoading: boolean };
 
     const isLoading = isRequesterLoading || profileLoading;
 

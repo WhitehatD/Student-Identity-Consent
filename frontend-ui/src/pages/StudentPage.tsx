@@ -1,41 +1,41 @@
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount } from "wagmi";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import StudentProfile from "@/components/StudentProfile";
 import StudentConsents from "@/components/StudentConsents";
 import AuditLog from "@/components/AuditLog";
 import { Button } from "@/components/ui/button";
-import { useContracts } from "@/lib/contractsContext";
+import { api } from "@/lib/api";
 
 export default function StudentPage() {
     const { address, isConnected } = useAccount();
-    const { addresses, eduIdentityAbi } = useContracts();
-    const eduIdentityAddress = addresses.eduIdentity as `0x${string}`;
+    const [isStudent, setIsStudent] = useState<boolean>(false);
+    const [studentProfile, setStudentProfile] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const canCallContract = isConnected && !!address && !!eduIdentityAddress;
+    useEffect(() => {
+        if (!isConnected || !address) return;
 
-    const { data: isStudent, isLoading: isStudentLoading } = useReadContract({
-        address: eduIdentityAddress,
-        abi: eduIdentityAbi,
-        functionName: "isStudent",
-        args: [address!],
-        query: {
-            enabled: canCallContract,
-            refetchOnMount: true,
-        },
-    });
+        const fetchData = async () => {
+            setIsLoading(true);
+            try {
+                const roleData = await api.getRole(address);
+                const isStudentRole = roleData.role === 1;
+                setIsStudent(isStudentRole);
 
-    const { data: studentProfile, isLoading: profileLoading } = useReadContract({
-        address: eduIdentityAddress,
-        abi: eduIdentityAbi,
-        functionName: "getStudentProfile",
-        args: [address!],
-        query: {
-            enabled: canCallContract && !!isStudent,
-            refetchOnMount: true,
-        },
-    });
+                if (isStudentRole) {
+                    const profileData = await api.getStudentProfile(address);
+                    setStudentProfile(profileData.profile);
+                }
+            } catch (error) {
+                console.error("Error fetching student data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-    const isLoading = isStudentLoading || profileLoading;
+        fetchData();
+    }, [address, isConnected]);
 
     const renderContent = () => {
         if (!isConnected) {

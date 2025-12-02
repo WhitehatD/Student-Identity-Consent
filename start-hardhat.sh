@@ -22,6 +22,9 @@ if [ $elapsed -eq $timeout ]; then
     exit 1
 fi
 
+echo "Compiling contracts..."
+npx hardhat compile --force
+
 echo "Deploying contracts..."
 npx hardhat ignition deploy ./ignition/modules/EduSystem.ts --network localhost
 

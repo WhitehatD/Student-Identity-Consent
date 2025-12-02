@@ -187,7 +187,9 @@ contract EduConsent {
             hasConsent
         );
 
-        if (!hasConsent) revert NoValidConsent();
+        if (!hasConsent) {
+            return "";
+        }
 
         EduIdentity.StudentProfile memory profile = identityContract.getStudentProfile(owner);
 

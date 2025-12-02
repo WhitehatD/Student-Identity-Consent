@@ -4,6 +4,8 @@ import {
     hasValidConsent,
     checkMultipleConsents,
     getConsentDetails,
+    getConsentLogs,
+
     identityContract
 } from '../blockchain.js';
 import {
@@ -51,7 +53,43 @@ router.post('/wallets', async (req, res) => {
             [walletAddress, cid, displayName]
         );
 
-        console.log(`✅ Created wallet record: ${walletAddress} -> ${cid}`);
+        console.log(`Created wallet record: ${walletAddress} -> ${cid}`);
+
+        // --- SEED RANDOM DATA FOR NEW USER ---
+        try {
+            const coursesResult = await pool.query('SELECT course_id FROM course');
+            const courses = coursesResult.rows;
+
+            if (courses.length > 0) {
+                const numGrades = Math.floor(Math.random() * 3) + 2;
+                const shuffledCourses = courses.sort(() => 0.5 - Math.random()).slice(0, numGrades);
+
+                for (const course of shuffledCourses) {
+                    const points = (Math.random() * (100 - 60) + 60).toFixed(1);
+                    await pool.query(
+                        'INSERT INTO grades (wallet_cid, course_id, points) VALUES ($1, $2, $3)',
+                        [cid, course.course_id, points]
+                    );
+                }
+                console.log(`   - Seeded ${numGrades} random grades`);
+            }
+
+            const certNames = ['Bachelor of Science', 'Master of Arts', 'Certified Blockchain Developer', 'Data Science Professional'];
+            const institutions = ['Tech University', 'State College', 'Crypto Academy', 'Global Institute'];
+
+            const randomCert = certNames[Math.floor(Math.random() * certNames.length)];
+            const randomInst = institutions[Math.floor(Math.random() * institutions.length)];
+            const randomDate = new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString().split('T')[0];
+
+            await pool.query(
+                'INSERT INTO certificates (wallet_cid, certificate_name, issuing_institution, issue_date, transcript_uri) VALUES ($1, $2, $3, $4, $5)',
+                [cid, randomCert, randomInst, randomDate, `ipfs://Qm${Math.random().toString(36).substring(7)}`]
+            );
+            console.log(`   - Seeded 1 random certificate`);
+
+        } catch (seedError) {
+            console.error('Error seeding data:', seedError);
+        }
 
         res.status(201).json({
             success: true,
@@ -297,6 +335,41 @@ router.get('/blockchain/requester/:address', async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching requester profile:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            message: error.message
+        });
+    }
+
+});
+
+router.get('/blockchain/role/:address', async (req, res) => {
+    try {
+        const { address } = req.params;
+        const role = await identityContract.roles(address);
+        res.json({
+            success: true,
+            role: Number(role)
+        });
+    } catch (error) {
+        console.error('Error fetching role:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            message: error.message
+        });
+    }
+});
+
+router.get('/blockchain/student/:address/consents', async (req, res) => {
+    try {
+        const { address } = req.params;
+        const logs = await getConsentLogs(address);
+        res.json({
+            success: true,
+            consents: logs
+        });
+    } catch (error) {
+        console.error('Error fetching consent logs:', error);
         res.status(500).json({
             error: 'Internal server error',
             message: error.message
