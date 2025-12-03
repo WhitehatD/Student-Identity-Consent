@@ -56,7 +56,7 @@ You must have the following software installed on your machine:
 
 1.  **Clone the repository:**
     ```sh
-    git clone <https://github.com/WhitehatD/Student-Identity-Consent.git>
+    git clone https://github.com/WhitehatD/Student-Identity-Consent.git
     cd Student-Identity-Consent
     ```
 
