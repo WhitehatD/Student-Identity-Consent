@@ -1,4 +1,4 @@
-# EduChain: A Decentralized Student Identity Platform
+# EduCon: A Decentralized Student Identity Platform
 
 > A proof-of-concept decentralized application that empowers students to control their own academic data using blockchain technology for identity and consent management, with sensitive data stored securely off-chain.
 
@@ -19,7 +19,7 @@
 
 ## About The Project
 
-EduChain tackles the challenge of data privacy in education. In traditional systems, student data (grades, transcripts, etc.) is held by institutions, giving students little control. This project demonstrates a new paradigm where:
+EduCon tackles the challenge of data privacy in education. In traditional systems, student data (grades, transcripts, etc.) is held by institutions, giving students little control. This project demonstrates a new paradigm where:
 
 -   **Identity is On-Chain:** Students and data requesters (e.g., universities, employers) register their identity on a blockchain.
 -   **Consent is King:** Students have granular control and can grant or revoke access to specific types of their data to specific requesters for a limited time. All consent agreements are managed by a smart contract.
